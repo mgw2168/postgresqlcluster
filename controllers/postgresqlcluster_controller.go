@@ -19,17 +19,22 @@ package controllers
 import (
 	"context"
 	sliceutil "github.com/kubesphere/controllers/utils"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/yaml"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/api/v1alpha1"
 )
 
-var pgClusterFinalizer = "finalizers.radondb.com/pgcluster"
+var (
+	pgClusterFinalizer = "finalizers.radondb.com/pgcluster"
+	decUnstructured    = yaml.NewDecodingSerializer(unstructured.UnstructuredJSONScheme)
+)
 
 // PostgreSQLClusterReconciler reconciles a PostgreSQLCluster object
 type PostgreSQLClusterReconciler struct {
@@ -52,10 +57,15 @@ type PostgreSQLClusterReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
 func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
-
-	pgCluster := &pgclusterv1alpha1.PostgreSQLCluster{}
+	pgCluster := &v1alpha1.PostgreSQLCluster{}
 	if err := r.Get(ctx, req.NamespacedName, pgCluster); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+
+	if pgCluster.Status.State == "" {
+		pgCluster.Status.State = v1alpha1.Creating
+		err := r.Status().Update(ctx, pgCluster)
+		return ctrl.Result{}, err
 	}
 
 	if pgCluster.DeletionTimestamp.IsZero() {
@@ -68,9 +78,20 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	} else {
 		// the object is not being deleted
 		if sliceutil.HasString(pgCluster.Finalizers, pgClusterFinalizer) {
-			// do delete
+			// todo do delete
 			err := r.Update(ctx, pgCluster)
 			return reconcile.Result{}, err
+		}
+	}
+
+	// install postgresql cluster
+	if pgCluster.Status.State == v1alpha1.Creating {
+		if err := r.installPostgreSQLCluster(ctx, pgCluster); err != nil {
+			klog.Error(err.Error())
+		}
+	} else if pgCluster.Status.Version != pgCluster.Spec.ClientVersion {
+		if err := r.deleteCluster(ctx, pgCluster); err != nil {
+
 		}
 	}
 
@@ -79,7 +100,35 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
+	if r.Client == nil {
+		r.Client = mgr.GetClient()
+	}
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&pgclusterv1alpha1.PostgreSQLCluster{}).
+		For(&v1alpha1.PostgreSQLCluster{}).
 		Complete(r)
+}
+
+func (r *PostgreSQLClusterReconciler) installPostgreSQLCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+	err = r.createPgCluster(ctx, pg)
+	if err != nil {
+		klog.Errorf("install pg cluster error: %s", err.Error())
+		return err
+	}
+	return err
+}
+
+func getUnstructuredObjStatus(obj *unstructured.Unstructured) string {
+	var clusterStatus string
+	statusMap, ok := obj.Object["status"].(map[string]interface{})
+	if ok {
+		clusterStatus, ok = statusMap["state"].(string)
+		if ok {
+			return clusterStatus
+		} else {
+			clusterStatus = v1alpha1.ClusterStatusUnknown
+		}
+	} else {
+		clusterStatus = v1alpha1.ClusterStatusUnknown
+	}
+	return clusterStatus
 }

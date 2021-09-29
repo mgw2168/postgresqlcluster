@@ -3,5 +3,26 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # Add fields here
-  foo: bar
+  # create cluster
+  clientVersion: "4.7.1"
+  name: "test001"
+  namespace: "xxzz"
+  syncReplication: true
+  ccpImage: ""
+  ccpImageTag: ""
+  replicaCount: 1
+  cpuLimit: "1"
+  cpuRequest: "1"
+  memoryLimit: "1Gi"
+  memoryRequest: "1Gi"
+  database: "db1"
+  username: "pguser1"
+  password: "pass1"
+
+  # delete cluster
+  clusterName: ""
+  Selector: ""
+  AllFlag: false
+  DeleteBackups: false
+  DeleteData: false
+

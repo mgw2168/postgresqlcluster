@@ -1,0 +1,34 @@
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - pgcluster.kubesphere.io
+  resources:
+  - postgresqlclusters
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - pgcluster.kubesphere.io
+  resources:
+  - postgresqlclusters/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - pgcluster.kubesphere.io
+  resources:
+  - postgresqlclusters/status
+  verbs:
+  - get
+  - patch
+  - update
