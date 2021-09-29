@@ -1,0 +1,7 @@
+apiVersion: pgcluster.kubesphere.io/v1alpha1
+kind: PostgreSQLCluster
+metadata:
+  name: postgresqlcluster-sample
+spec:
+  # Add fields here
+  foo: bar
