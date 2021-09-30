@@ -1,0 +1,15 @@
+apiVersion: pgcluster.kubesphere.io/v1alpha1
+kind: PostgreSQLCluster
+metadata:
+  name: postgresqlcluster-sample
+spec:
+  # delete cluster
+  clientVersion: "4.7.1"
+  namespace: "xxzz"
+  name: "test001"
+  ccpImageTag: ""
+  nodeLabel: ""
+  replicaCount: 1
+  serviceType: ""
+  storageConfig: ""
+  tolerations: []

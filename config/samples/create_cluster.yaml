@@ -19,10 +19,3 @@ spec:
   username: "pguser1"
   password: "pass1"
 
-  # delete cluster
-  clusterName: ""
-  Selector: ""
-  AllFlag: false
-  DeleteBackups: false
-  DeleteData: false
-

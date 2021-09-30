@@ -52,7 +52,7 @@ type UpdateClusterRequest struct {
 	ClientVersion string
 	Namespace     string
 	AllFlag       bool
-	Autofail      UpdateClusterAutofailStatus
+	Autofail      int
 	CPULimit      string
 	CPURequest    string
 	MemoryLimit   string
@@ -101,4 +101,100 @@ type ShowClusterRequest struct {
 	Namespace string `json:"namespace"`
 	// Shows all clusters
 	AllFlag bool `json:"allflag"`
+}
+
+// ******** scale cluster
+type ClusterScaleRequest struct {
+	Name          string
+	ClientVersion string
+	Namespace     string
+	CCPImageTag   string
+	NodeLabel     string
+	ReplicaCount  int
+	ServiceType   string
+	StorageConfig string
+	Tolerations   []v1.Toleration `json:"tolerations"`
+}
+type ClusterScaleResponse struct {
+	Results []string
+	Status
+}
+
+// ******** scale down
+type ScaleDownRequest struct {
+	Name          string
+	ClientVersion string
+	Namespace     string
+	replicaName   string
+	DeleteData    bool
+}
+
+type ScaleDownResponse struct {
+	Results []string
+	Status
+}
+
+// ******** create user
+type CreateUserRequest struct {
+	AllFlag         bool
+	Clusters        []string
+	ClientVersion   string
+	ManagedUser     bool
+	Namespace       string
+	Password        string
+	PasswordAgeDays int
+	PasswordLength  int
+	// PasswordType is one of "md5" or "scram-sha-256", defaults to "md5"
+	PasswordType string
+	Selector     string
+	Username     string
+}
+
+type CreateUserResponse struct {
+	Results []UserResponseDetail
+	Status
+}
+
+type UserResponseDetail struct {
+	ClusterName  string
+	Error        bool
+	ErrorMessage string
+	Password     string
+	Username     string
+	ValidUntil   string
+}
+
+// ******** delete user
+type DeleteUserRequest struct {
+	AllFlag       bool
+	ClientVersion string
+	Clusters      []string
+	Namespace     string
+	Selector      string
+	Username      string
+}
+
+type DeleteUserResponse struct {
+	Results []UserResponseDetail
+	Status
+}
+
+// ******** update user
+type UpdateUserRequest struct {
+	ClientVersion string
+	Namespace     string
+	AllFlag       bool
+	Selector      string
+	Clusters    []string
+	Username                 string
+	Password        string
+	PasswordAgeDays int
+	PasswordLength  int
+	PasswordType        string
+	SetSystemAccountPassword bool
+}
+
+type UpdateUserResponse struct {
+	Results []UserResponseDetail
+	Status
 }

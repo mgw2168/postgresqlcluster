@@ -9,8 +9,8 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) scaleCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
-	var resp pgcluster.ClusterScaleResponse
+func (r *PostgreSQLClusterReconciler) scaleDownCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+	var resp pgcluster.ScaleDownResponse
 	scaleReq := &pgcluster.ClusterScaleRequest{
 		Name:          pg.Spec.Name,
 		ClientVersion: pg.Spec.ClientVersion,
@@ -22,7 +22,7 @@ func (r *PostgreSQLClusterReconciler) scaleCluster(ctx context.Context, pg *v1al
 		StorageConfig:  pg.Spec.StorageConfig,
 		Tolerations:   pg.Spec.Tolerations,
 	}
-	respByte, err := request.Call("POST", request.ScaleClusterPath + pg.Spec.Name, scaleReq)
+	respByte, err := request.Call("GET", request.ScaleDownClusterPath, scaleReq)
 	if err != nil {
 		klog.Errorf("call scale cluster error: ", err.Error())
 		return

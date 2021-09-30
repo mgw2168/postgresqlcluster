@@ -16,8 +16,16 @@ const (
 	UpdateClusterPath  = HostPath + "/clustersupdate"
 	RestartClusterPath = HostPath + "/restart"
 
-	// node path
-	ScaleClusterPath = "clusters/scale/hippo"
+	// scale cluster
+	ScaleClusterPath = HostPath + "/clusters/scale/"
+	ScaleDownClusterPath = HostPath + "/scaledown/"
+
+
+	// User path
+	CreateUserPath = HostPath + "/usercreate"
+	DeleteUserPath = HostPath + "/userdelete"
+	UpdateUserPath = HostPath + "/userupdate"
+
 
 	// Ok status
 	Ok = "ok"

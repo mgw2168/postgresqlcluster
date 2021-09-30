@@ -9,25 +9,17 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
-	var resp pgcluster.UpdateClusterResponse
-	// TODO Autofail:0
-	updateReq := &pgcluster.UpdateClusterRequest{
-		Clustername:   pg.Spec.ClusterName,
-		ClientVersion: pg.Spec.ClientVersion,
-		Namespace:     pg.Spec.Namespace,
+func (r *PostgreSQLClusterReconciler) DeletePgUser(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+	var resp pgcluster.DeleteUserResponse
+	deleteUserReq := &pgcluster.DeleteUserRequest{
 		AllFlag:       pg.Spec.AllFlag,
-		Autofail:      pg.Spec.AutoFail,
-		CPULimit:      pg.Spec.CPULimit,
-		CPURequest:    pg.Spec.CPURequest,
-		MemoryLimit:   pg.Spec.MemoryLimit,
-		MemoryRequest: pg.Spec.MemoryRequest,
-		PVCSize:       pg.Spec.PVCSize,
-		Startup:       pg.Spec.Startup,
-		Shutdown:      pg.Spec.Shutdown,
-		Tolerations:   pg.Spec.Tolerations,
+		ClientVersion: pg.Spec.ClientVersion,
+		Clusters:      pg.Spec.ClusterName,
+		Namespace:     pg.Spec.Namespace,
+		Selector:      pg.Spec.Selector,
+		Username:      pg.Spec.Username,
 	}
-	respByte, err := request.Call("POST", request.CreateClusterPath, updateReq)
+	respByte, err := request.Call("POST", request.DeleteUserPath, deleteUserReq)
 	if err != nil {
 		klog.Errorf("call create cluster error: %s", err.Error())
 		return
@@ -46,4 +38,3 @@ func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v
 	}
 	return
 }
-

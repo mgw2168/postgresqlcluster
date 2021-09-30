@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -26,29 +27,52 @@ import (
 // PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
 type PostgreSQLClusterSpec struct {
 	// ******** create cluster params ********
-	ClientVersion   string `json:"clientVersion"`
+	ClientVersion string `json:"clientVersion"`
+	// cluster name
 	Name            string `json:"name"`
 	Namespace       string `json:"namespace"`
-	SyncReplication *bool  `json:"syncReplication"`
-	CCPImage        string `json:"ccpImage"`
-	CCPImageTag     string `json:"ccpImageTag"`
-	ReplicaCount    int    `json:"replicaCount"`
-	CPULimit        string `json:"cpuLimit"`
-	CPURequest      string `json:"cpuRequest"`
-	MemoryLimit     string `json:"memoryLimit"`
-	MemoryRequest   string `json:"memoryRequest"`
-	Database        string `json:"database"`
-	Username        string `json:"username"`
-	Password        string `json:"password"`
+	SyncReplication *bool  `json:"syncReplication,omitempty"`
+	CCPImage        string `json:"ccpImage,omitempty"`
+	CCPImageTag     string `json:"ccpImageTag,omitempty"`
+	ReplicaCount    int    `json:"replicaCount,omitempty"`
+	CPULimit        string `json:"cpuLimit,omitempty"`
+	CPURequest      string `json:"cpuRequest,omitempty"`
+	MemoryLimit     string `json:"memoryLimit,omitempty"`
+	MemoryRequest   string `json:"memoryRequest,omitempty"`
+	Database        string `json:"database,omitempty"`
+	Username        string `json:"username,omitempty"`
+	Password        string `json:"password,omitempty"`
 
 	// ******** update cluster
+	ClusterName []string `json:"clusterName,omitempty"`
+	AutoFail    int      `json:"autofail,omitempty"`
+	PVCSize     string   `json:"pvcSize,omitempty"`
+	Startup     bool     `json:"startup,omitempty"`
+	Shutdown    bool     `json:"shutdown,omitempty"`
 
 	// ******** delete cluster
-	ClusterName   string `json:"clusterName"`
-	Selector      string `json:"selector"`
-	AllFlag       bool   `json:"allFlag"`
-	DeleteBackups bool   `json:"deleteBackups"`
-	DeleteData    bool   `json:"deleteData"`
+	//ClusterName   string `json:"clusterName"`
+	Selector      string `json:"selector,omitempty"`
+	AllFlag       bool   `json:"allFlag,omitempty"`
+	DeleteBackups bool   `json:"deleteBackups,omitempty"`
+	DeleteData    bool   `json:"deleteData,omitempty"`
+
+	// ******** scale cluster
+	NodeLabel     string          `json:"nodeLabel,omitempty"`
+	ServiceType   string          `json:"serviceType,omitempty"`
+	StorageConfig string          `json:"storageConfig,omitempty"`
+	Tolerations   []v1.Toleration `json:"tolerations,omitempty"`
+
+	// ******** scale down
+
+	// ******** create user
+	ManagedUser     bool   `json:"managedUser"`
+	PasswordAgeDays int    `json:"passwordAgeDays"`
+	PasswordLength  int    `json:"passwordLength"`
+	PasswordType    string `json:"passwordType"`
+
+	// ******** update user
+	SetSystemAccountPassword bool `json:"setSystemAccountPassword"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster

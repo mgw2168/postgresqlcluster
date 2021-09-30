@@ -1,0 +1,22 @@
+apiVersion: pgcluster.kubesphere.io/v1alpha1
+kind: PostgreSQLCluster
+metadata:
+  name: postgresqlcluster-sample
+spec:
+  # delete cluster
+  clientVersion: "4.7.1"
+  namespace: "xxzz"
+  clusterName:
+    - "test001"
+  Selector: "name=test001"
+  allFlag: false
+  autofail: true
+  cpuLimit: ""
+  cpuRequest: ""
+  memoryLimit: ""
+  memoryRequest: ""
+  pvcSize: "10Gi"
+  startup: true
+  shutdown: false
+  tolerations: []
+

@@ -5,6 +5,7 @@ const (
 	Deleting = "deleting"
 	Failed   = "failed"
 	Created  = "created"
+	Scaled  = "scaled"
 
 	// kind of operator cr
 	DBTypeClickHouse = "ClickHouseInstallation"

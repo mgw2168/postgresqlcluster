@@ -12,7 +12,7 @@ import (
 func (r *PostgreSQLClusterReconciler) deleteCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pgcluster.DeleteClusterResponse
 	clusterReq := &pgcluster.DeleteClusterRequest{
-		Clustername:   pg.Spec.ClusterName,
+		Clustername:   pg.Spec.Name,
 		Selector:      pg.Spec.Selector,
 		ClientVersion: pg.Spec.ClientVersion,
 		Namespace:     pg.Spec.Namespace,
