@@ -3,13 +3,13 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # delete cluster
+  # show user
+  action: "show_user"
   clientVersion: "4.7.1"
   namespace: "pgtest"
-  name: "test001"
-  ccpImageTag: ""
-  nodeLabel: ""
-  replicaCount: 1
-  serviceType: ""
-  storageConfig: ""
-  tolerations: []
+  clusterName:
+    - "test001"
+  allFlag: false
+  showSystemAccounts: true
+
+

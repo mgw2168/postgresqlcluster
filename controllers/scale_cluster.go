@@ -28,7 +28,7 @@ func (r *PostgreSQLClusterReconciler) scalePgCluster(ctx context.Context, pg *v1
 		return
 	}
 
-	if err = json.Unmarshal(respByte, resp); err != nil {
+	if err = json.Unmarshal(respByte, &resp); err != nil {
 		klog.Errorf("scale cluster json unmarshal error: ", err.Error())
 	}
 

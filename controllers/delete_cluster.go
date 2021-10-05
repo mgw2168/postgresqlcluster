@@ -25,7 +25,7 @@ func (r *PostgreSQLClusterReconciler) deletePgCluster(ctx context.Context, pg *v
 		klog.Errorf("call delete cluster error: %s", err.Error())
 		return
 	}
-	err = json.Unmarshal(respByte, resp)
+	err = json.Unmarshal(respByte, &resp)
 	if err != nil {
 		klog.Errorf("delete cluster json unmarshal error: %s", err.Error())
 		return

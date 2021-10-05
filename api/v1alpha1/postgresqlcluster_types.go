@@ -30,7 +30,7 @@ type PostgreSQLClusterSpec struct {
 	// ******** create cluster params ********
 	ClientVersion string `json:"clientVersion"`
 	// cluster name
-	Name            string `json:"name"`
+	Name            string `json:"name,omitempty"`
 	Namespace       string `json:"namespace"`
 	SyncReplication *bool  `json:"syncReplication,omitempty"`
 	CCPImage        string `json:"ccpImage,omitempty"`
@@ -79,12 +79,15 @@ type PostgreSQLClusterSpec struct {
 
 	// ******** update user
 	SetSystemAccountPassword bool `json:"setSystemAccountPassword,omitempty"`
+
+	// ******** show user
+	ShowSystemAccounts bool `json:"showSystemAccounts"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
 	//Condition []string `json:"condition"`
-	PostgreSQLClusterState string `json:",omitempty"`
+	PostgreSQLClusterState string `json:"pgcluster_state,omitempty"`
 	State                  string `json:"state,omitempty"`
 	Version                string `json:"version,omitempty"`
 }

@@ -3,13 +3,11 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # delete cluster
+  # scale down cluster
+  action: "scaledown_cluster"
   clientVersion: "4.7.1"
-  namespace: "xxzz"
+  namespace: "pgtest"
   name: "test001"
-  ccpImageTag: ""
-  nodeLabel: ""
-  replicaCount: 1
-  serviceType: ""
-  storageConfig: ""
-  tolerations: []
+  replicaName: "test001-kmfy"
+  delete-data: "true"
+

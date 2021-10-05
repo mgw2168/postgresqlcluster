@@ -2,7 +2,7 @@ package v1alpha1
 
 const (
 	Creating = "creating"
-	Deleted = "deleted"
+	Deleted  = "deleted"
 	Failed   = "failed"
 	Created  = "created"
 	Scaled   = "scaled"
@@ -16,6 +16,7 @@ const (
 	CreateUser       = "create_user"
 	DeleteUser       = "delete_user"
 	UpdateUser       = "update_user"
+	ShowUser         = "show_user"
 
 	// cluster status
 	ClusterStatusUnknown = "unknown"

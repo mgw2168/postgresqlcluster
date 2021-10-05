@@ -163,14 +163,15 @@ spec:
             required:
             - action
             - clientVersion
-            - name
             - namespace
             type: object
           status:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
             properties:
-              state:
+              pgcluster_state:
                 description: Condition []string `json:"condition"`
+                type: string
+              state:
                 type: string
               version:
                 type: string

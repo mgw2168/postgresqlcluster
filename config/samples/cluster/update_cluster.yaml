@@ -3,19 +3,20 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # delete cluster
+  # update cluster
   action: "update_cluster"
   clientVersion: "4.7.1"
-  namespace: "xxzz"
+  namespace: "pgtest"
   clusterName:
     - "test001"
   Selector: "name=test001"
   allFlag: false
-  autofail: true
-  cpuLimit: ""
-  cpuRequest: ""
-  memoryLimit: ""
-  memoryRequest: ""
+  # todo int
+  autofail: 1
+  cpuLimit: "600m"
+  cpuRequest: "600m"
+  memoryLimit: "600Mi"
+  memoryRequest: "600Mi"
   pvcSize: "10Gi"
   startup: true
   shutdown: false

@@ -1,0 +1,19 @@
+apiVersion: pgcluster.kubesphere.io/v1alpha1
+kind: PostgreSQLCluster
+metadata:
+  name: postgresqlcluster-sample
+spec:
+  # update user
+  action: "update_user"
+  clientVersion: "4.7.1"
+  namespace: "pgtest"
+  selector: ""
+  allFlag: false
+  clusterName:
+    - "test001"
+  username: "mgw"
+  password: "123456"
+  passwordAgeDays: 86400
+  passwordLength: 8
+  passwordType: "md5"
+  setSystemAccountPassword: false

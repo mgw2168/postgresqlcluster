@@ -86,21 +86,12 @@ type DeleteClusterResponse struct {
 
 // ********* show cluster
 type ShowClusterRequest struct {
-	// Name of the cluster to show
-	// required: true
-	Clustername string `json:"clustername"`
-	// Selector of the cluster to show
-	Selector string `json:"selector"`
-	// Image tag of the cluster
-	Ccpimagetag string `json:"ccpimagetag"`
-	// Version of API client
-	// required: true
+	Clustername   string `json:"clustername"`
+	Selector      string `json:"selector"`
+	Ccpimagetag   string `json:"ccpimagetag"`
 	ClientVersion string `json:"clientversion"`
-	// Namespace to search
-	// required: true
-	Namespace string `json:"namespace"`
-	// Shows all clusters
-	AllFlag bool `json:"allflag"`
+	Namespace     string `json:"namespace"`
+	AllFlag       bool   `json:"allflag"`
 }
 
 // ******** scale cluster
@@ -222,6 +213,22 @@ type UpdateUserRequest struct {
 }
 
 type UpdateUserResponse struct {
+	Results []UserResponseDetail
+	Status
+}
+
+// ******** show user
+type ShowUserRequest struct {
+	AllFlag            bool
+	Clusters           []string
+	ClientVersion      string
+	Expired            int
+	Namespace          string
+	Selector           string
+	ShowSystemAccounts bool
+}
+
+type ShowUserResponse struct {
 	Results []UserResponseDetail
 	Status
 }

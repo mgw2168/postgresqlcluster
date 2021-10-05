@@ -23,7 +23,7 @@ func (r *PostgreSQLClusterReconciler) restartCluster(ctx context.Context, pg *v1
 		klog.Errorf("call restart cluster error: %s", err.Error())
 		return
 	}
-	err = json.Unmarshal(respByte, resp)
+	err = json.Unmarshal(respByte, &resp)
 	if err != nil {
 		klog.Errorf("restart cluster json unmarshal error: %s", err.Error())
 		return

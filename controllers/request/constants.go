@@ -24,6 +24,7 @@ const (
 	CreateUserPath = HostPath + "/usercreate"
 	DeleteUserPath = HostPath + "/userdelete"
 	UpdateUserPath = HostPath + "/userupdate"
+	ShowUserPath   = HostPath + "/usershow"
 
 	// Ok status
 	Ok = "ok"
