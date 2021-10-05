@@ -11,7 +11,6 @@ import (
 
 func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pgcluster.UpdateClusterResponse
-	// TODO Autofail:0
 	updateReq := &pgcluster.UpdateClusterRequest{
 		Clustername:   pg.Spec.ClusterName,
 		ClientVersion: pg.Spec.ClientVersion,
@@ -27,9 +26,9 @@ func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v
 		Shutdown:      pg.Spec.Shutdown,
 		Tolerations:   pg.Spec.Tolerations,
 	}
-	respByte, err := request.Call("POST", request.CreateClusterPath, updateReq)
+	respByte, err := request.Call("POST", request.UpdateClusterPath, updateReq)
 	if err != nil {
-		klog.Errorf("call create cluster error: %s", err.Error())
+		klog.Errorf("call update cluster error: %s", err.Error())
 		return
 	}
 	if err = json.Unmarshal(respByte, &resp); err != nil {
@@ -38,12 +37,11 @@ func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v
 	}
 	if resp.Code == request.Ok {
 		// update cluster status
-		pg.Status.State = v1alpha1.Created
+		pg.Status.PostgreSQLClusterState = v1alpha1.Created
 		err = r.Status().Update(ctx, pg)
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
 		err = r.Status().Update(ctx, pg)
 	}
 	return
 }
-

@@ -4,6 +4,7 @@ metadata:
   name: postgresqlcluster-sample
 spec:
   # delete cluster
+  action: "update_cluster"
   clientVersion: "4.7.1"
   namespace: "xxzz"
   clusterName:

@@ -26,7 +26,7 @@ func (r *PostgreSQLClusterReconciler) createPgUser(ctx context.Context, pg *v1al
 	}
 	respByte, err := request.Call("POST", request.CreateUserPath, createUserReq)
 	if err != nil {
-		klog.Errorf("call create cluster error: %s", err.Error())
+		klog.Errorf("call create user error: %s", err.Error())
 		return
 	}
 	if err = json.Unmarshal(respByte, &resp); err != nil {
@@ -35,10 +35,10 @@ func (r *PostgreSQLClusterReconciler) createPgUser(ctx context.Context, pg *v1al
 	}
 	if resp.Code == request.Ok {
 		// update cluster status
-		pg.Status.State = v1alpha1.Created
+		pg.Status.PostgreSQLClusterState = v1alpha1.Created
 		err = r.Status().Update(ctx, pg)
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
 		err = r.Status().Update(ctx, pg)
 	}
 	return

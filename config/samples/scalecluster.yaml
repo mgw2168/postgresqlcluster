@@ -5,7 +5,7 @@ metadata:
 spec:
   # delete cluster
   clientVersion: "4.7.1"
-  namespace: "xxzz"
+  namespace: "pgtest"
   name: "test001"
   ccpImageTag: ""
   nodeLabel: ""

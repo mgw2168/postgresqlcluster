@@ -62,12 +62,6 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if pgCluster.Status.State == "" {
-		pgCluster.Status.State = v1alpha1.Creating
-		err := r.Status().Update(ctx, pgCluster)
-		return ctrl.Result{}, err
-	}
-
 	if pgCluster.DeletionTimestamp.IsZero() {
 		// The object is not being deleted
 		if !sliceutil.HasString(pgCluster.Finalizers, pgClusterFinalizer) {
@@ -84,17 +78,32 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		}
 	}
 
-	// install postgresql cluster
-	if pgCluster.Status.State == v1alpha1.Creating {
-		if err := r.installPostgreSQLCluster(ctx, pgCluster); err != nil {
+	if pgCluster.Spec.Action == v1alpha1.CreateCluster {
+		if err := r.createPgCluster(ctx, pgCluster); err != nil {
 			klog.Error(err.Error())
+			return ctrl.Result{}, err
 		}
-	} else if pgCluster.Status.Version != pgCluster.Spec.ClientVersion {
-		if err := r.deleteCluster(ctx, pgCluster); err != nil {
-
+	} else if pgCluster.Spec.Action == v1alpha1.UpdateCluster {
+		if err := r.updatePgUser(ctx, pgCluster); err != nil {
+			klog.Error(err.Error())
+			return ctrl.Result{}, err
+		}
+	} else if pgCluster.Spec.Action == v1alpha1.ScaleCluster {
+		if err := r.scalePgCluster(ctx, pgCluster); err != nil {
+			klog.Error(err.Error())
+			return ctrl.Result{}, err
+		}
+	} else if pgCluster.Spec.Action == v1alpha1.ScaleDownCluster {
+		if err := r.scaleDownPgCluster(ctx, pgCluster); err != nil {
+			klog.Error(err.Error())
+			return ctrl.Result{}, err
+		}
+	} else if pgCluster.Spec.Action == v1alpha1.DeleteCluster {
+		if err := r.deletePgCluster(ctx, pgCluster); err != nil {
+			klog.Error(err.Error())
+			return ctrl.Result{}, err
 		}
 	}
-
 	return ctrl.Result{}, nil
 }
 
@@ -106,29 +115,4 @@ func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.PostgreSQLCluster{}).
 		Complete(r)
-}
-
-func (r *PostgreSQLClusterReconciler) installPostgreSQLCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
-	err = r.createPgCluster(ctx, pg)
-	if err != nil {
-		klog.Errorf("install pg cluster error: %s", err.Error())
-		return err
-	}
-	return err
-}
-
-func getUnstructuredObjStatus(obj *unstructured.Unstructured) string {
-	var clusterStatus string
-	statusMap, ok := obj.Object["status"].(map[string]interface{})
-	if ok {
-		clusterStatus, ok = statusMap["state"].(string)
-		if ok {
-			return clusterStatus
-		} else {
-			clusterStatus = v1alpha1.ClusterStatusUnknown
-		}
-	} else {
-		clusterStatus = v1alpha1.ClusterStatusUnknown
-	}
-	return clusterStatus
 }

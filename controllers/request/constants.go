@@ -17,15 +17,13 @@ const (
 	RestartClusterPath = HostPath + "/restart"
 
 	// scale cluster
-	ScaleClusterPath = HostPath + "/clusters/scale/"
+	ScaleClusterPath     = HostPath + "/clusters/scale/"
 	ScaleDownClusterPath = HostPath + "/scaledown/"
-
 
 	// User path
 	CreateUserPath = HostPath + "/usercreate"
 	DeleteUserPath = HostPath + "/userdelete"
 	UpdateUserPath = HostPath + "/userupdate"
-
 
 	// Ok status
 	Ok = "ok"

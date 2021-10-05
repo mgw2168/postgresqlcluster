@@ -38,10 +38,10 @@ func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v
 	}
 	if resp.Code == request.Ok {
 		// update cluster status
-		pg.Status.State = v1alpha1.Created
+		pg.Status.PostgreSQLClusterState = v1alpha1.Created
 		err = r.Status().Update(ctx, pg)
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
 		err = r.Status().Update(ctx, pg)
 	}
 	return

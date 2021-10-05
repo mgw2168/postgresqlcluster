@@ -2,20 +2,20 @@ package v1alpha1
 
 const (
 	Creating = "creating"
-	Deleting = "deleting"
+	Deleted = "deleted"
 	Failed   = "failed"
 	Created  = "created"
-	Scaled  = "scaled"
+	Scaled   = "scaled"
 
-	// kind of operator cr
-	DBTypeClickHouse = "ClickHouseInstallation"
-	DBTypePostgreSQL = "PostgreSQL"
-	DBTypeMysql      = "MySQL"
-
-	// type of the cluster application
-	ClusterAppTypeClickHouse = "ClickHouse"
-	ClusterAPPTypePostgreSQL = "PostgreSQL"
-	ClusterAPPTypeMySQL      = "MySQL"
+	// action of the cluster or user
+	CreateCluster    = "create_cluster"
+	DeleteCluster    = "delete_cluster"
+	UpdateCluster    = "update_cluster"
+	ScaleCluster     = "scale_cluster"
+	ScaleDownCluster = "scaledown_cluster"
+	CreateUser       = "create_user"
+	DeleteUser       = "delete_user"
+	UpdateUser       = "update_user"
 
 	// cluster status
 	ClusterStatusUnknown = "unknown"

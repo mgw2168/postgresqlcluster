@@ -4,9 +4,10 @@ metadata:
   name: postgresqlcluster-sample
 spec:
   # create cluster
+  action: "create_cluster"
   clientVersion: "4.7.1"
   name: "test001"
-  namespace: "xxzz"
+  namespace: "pgtest"
   syncReplication: true
   ccpImage: ""
   ccpImageTag: ""

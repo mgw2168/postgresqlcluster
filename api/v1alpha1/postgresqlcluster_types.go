@@ -26,6 +26,7 @@ import (
 
 // PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
 type PostgreSQLClusterSpec struct {
+	Action string `json:"action"`
 	// ******** create cluster params ********
 	ClientVersion string `json:"clientVersion"`
 	// cluster name
@@ -64,22 +65,28 @@ type PostgreSQLClusterSpec struct {
 	Tolerations   []v1.Toleration `json:"tolerations,omitempty"`
 
 	// ******** scale down
+	ReplicaName         string `json:"replicaName,omitempty"`
+	ScaleDownDeleteData string `json:"delete-data,omitempty"`
+	// ******** restart cluster
+	RollingUpdate bool     `json:"rollingUpdate,omitempty"`
+	Targets       []string `json:"targets,omitempty"`
 
 	// ******** create user
-	ManagedUser     bool   `json:"managedUser"`
-	PasswordAgeDays int    `json:"passwordAgeDays"`
-	PasswordLength  int    `json:"passwordLength"`
-	PasswordType    string `json:"passwordType"`
+	ManagedUser     bool   `json:"managedUser,omitempty"`
+	PasswordAgeDays int    `json:"passwordAgeDays,omitempty"`
+	PasswordLength  int    `json:"passwordLength,omitempty"`
+	PasswordType    string `json:"passwordType,omitempty"`
 
 	// ******** update user
-	SetSystemAccountPassword bool `json:"setSystemAccountPassword"`
+	SetSystemAccountPassword bool `json:"setSystemAccountPassword,omitempty"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
 	//Condition []string `json:"condition"`
-	State   string `json:"state,omitempty"`
-	Version string `json:"version,omitempty"`
+	PostgreSQLClusterState string `json:",omitempty"`
+	State                  string `json:"state,omitempty"`
+	Version                string `json:"version,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -21,6 +21,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"k8s.io/api/core/v1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -90,6 +91,23 @@ func (in *PostgreSQLClusterSpec) DeepCopyInto(out *PostgreSQLClusterSpec) {
 		in, out := &in.SyncReplication, &out.SyncReplication
 		*out = new(bool)
 		**out = **in
+	}
+	if in.ClusterName != nil {
+		in, out := &in.ClusterName, &out.ClusterName
+		*out = make([]string, len(*in))
+		copy(*out, *in)
+	}
+	if in.Tolerations != nil {
+		in, out := &in.Tolerations, &out.Tolerations
+		*out = make([]v1.Toleration, len(*in))
+		for i := range *in {
+			(*in)[i].DeepCopyInto(&(*out)[i])
+		}
+	}
+	if in.Targets != nil {
+		in, out := &in.Targets, &out.Targets
+		*out = make([]string, len(*in))
+		copy(*out, *in)
 	}
 }
 

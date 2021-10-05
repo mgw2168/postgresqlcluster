@@ -125,13 +125,40 @@ type ScaleDownRequest struct {
 	Name          string
 	ClientVersion string
 	Namespace     string
-	replicaName   string
-	DeleteData    bool
+	ReplicaName   string `json:"replica-name"`
+	DeleteData    bool   `json:"delete-data"`
 }
 
 type ScaleDownResponse struct {
 	Results []string
 	Status
+}
+
+// ******** restart cluster
+type RestartRequest struct {
+	Namespace     string
+	ClusterName   string
+	RollingUpdate bool
+	Targets       []string
+	ClientVersion string
+}
+
+type RestartResponse struct {
+	Result RestartDetail
+	Status
+}
+
+type RestartDetail struct {
+	ClusterName  string
+	Instances    []InstanceDetail
+	Error        bool
+	ErrorMessage string
+}
+
+type InstanceDetail struct {
+	InstanceName string
+	Error        bool
+	ErrorMessage string
 }
 
 // ******** create user
@@ -181,16 +208,16 @@ type DeleteUserResponse struct {
 
 // ******** update user
 type UpdateUserRequest struct {
-	ClientVersion string
-	Namespace     string
-	AllFlag       bool
-	Selector      string
-	Clusters    []string
+	ClientVersion            string
+	Namespace                string
+	AllFlag                  bool
+	Selector                 string
+	Clusters                 []string
 	Username                 string
-	Password        string
-	PasswordAgeDays int
-	PasswordLength  int
-	PasswordType        string
+	Password                 string
+	PasswordAgeDays          int
+	PasswordLength           int
+	PasswordType             string
 	SetSystemAccountPassword bool
 }
 

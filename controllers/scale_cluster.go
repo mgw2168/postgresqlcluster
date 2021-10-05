@@ -9,7 +9,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) scaleCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+func (r *PostgreSQLClusterReconciler) scalePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pgcluster.ClusterScaleResponse
 	scaleReq := &pgcluster.ClusterScaleRequest{
 		Name:          pg.Spec.Name,
@@ -19,10 +19,10 @@ func (r *PostgreSQLClusterReconciler) scaleCluster(ctx context.Context, pg *v1al
 		NodeLabel:     pg.Spec.NodeLabel,
 		ReplicaCount:  pg.Spec.ReplicaCount,
 		ServiceType:   pg.Spec.ServiceType,
-		StorageConfig:  pg.Spec.StorageConfig,
+		StorageConfig: pg.Spec.StorageConfig,
 		Tolerations:   pg.Spec.Tolerations,
 	}
-	respByte, err := request.Call("POST", request.ScaleClusterPath + pg.Spec.Name, scaleReq)
+	respByte, err := request.Call("POST", request.ScaleClusterPath+pg.Spec.Name, scaleReq)
 	if err != nil {
 		klog.Errorf("call scale cluster error: ", err.Error())
 		return
@@ -34,10 +34,10 @@ func (r *PostgreSQLClusterReconciler) scaleCluster(ctx context.Context, pg *v1al
 
 	if resp.Code == request.Ok {
 		// update cluster status
-		pg.Status.State = v1alpha1.Scaled
+		pg.Status.PostgreSQLClusterState = v1alpha1.Scaled
 		err = r.Status().Update(ctx, pg)
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
 		err = r.Status().Update(ctx, pg)
 	}
 	return

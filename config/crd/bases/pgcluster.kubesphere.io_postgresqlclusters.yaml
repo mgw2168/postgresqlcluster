@@ -36,8 +36,12 @@ spec:
           spec:
             description: PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
             properties:
+              action:
+                type: string
               allFlag:
                 type: boolean
+              autofail:
+                type: integer
               ccpImage:
                 type: string
               ccpImageTag:
@@ -46,56 +50,121 @@ spec:
                 description: '******** create cluster params ********'
                 type: string
               clusterName:
-                description: '******** delete cluster'
-                type: string
+                description: '******** update cluster'
+                items:
+                  type: string
+                type: array
               cpuLimit:
                 type: string
               cpuRequest:
                 type: string
               database:
                 type: string
+              delete-data:
+                type: string
               deleteBackups:
                 type: boolean
               deleteData:
+                type: boolean
+              managedUser:
+                description: '******** create user'
                 type: boolean
               memoryLimit:
                 type: string
               memoryRequest:
                 type: string
               name:
+                description: cluster name
                 type: string
               namespace:
                 type: string
+              nodeLabel:
+                description: '******** scale cluster'
+                type: string
               password:
+                type: string
+              passwordAgeDays:
+                type: integer
+              passwordLength:
+                type: integer
+              passwordType:
+                type: string
+              pvcSize:
                 type: string
               replicaCount:
                 type: integer
+              replicaName:
+                description: '******** scale down'
+                type: string
+              rollingUpdate:
+                description: '******** restart cluster'
+                type: boolean
               selector:
+                description: '******** delete cluster ClusterName   string `json:"clusterName"`'
+                type: string
+              serviceType:
+                type: string
+              setSystemAccountPassword:
+                description: '******** update user'
+                type: boolean
+              shutdown:
+                type: boolean
+              startup:
+                type: boolean
+              storageConfig:
                 type: string
               syncReplication:
                 type: boolean
+              targets:
+                items:
+                  type: string
+                type: array
+              tolerations:
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
               username:
                 type: string
             required:
-            - allFlag
-            - ccpImage
-            - ccpImageTag
+            - action
             - clientVersion
-            - clusterName
-            - cpuLimit
-            - cpuRequest
-            - database
-            - deleteBackups
-            - deleteData
-            - memoryLimit
-            - memoryRequest
             - name
             - namespace
-            - password
-            - replicaCount
-            - selector
-            - syncReplication
-            - username
             type: object
           status:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
