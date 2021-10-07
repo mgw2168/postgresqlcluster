@@ -81,15 +81,15 @@ type PostgreSQLClusterSpec struct {
 	SetSystemAccountPassword bool `json:"setSystemAccountPassword,omitempty"`
 
 	// ******** show user
-	ShowSystemAccounts bool `json:"showSystemAccounts"`
+	ShowSystemAccounts bool `json:"showSystemAccounts,omitempty"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
-	//Condition []string `json:"condition"`
-	PostgreSQLClusterState string `json:"pgcluster_state,omitempty"`
-	State                  string `json:"state,omitempty"`
-	Version                string `json:"version,omitempty"`
+	Condition              []string `json:"condition,omitempty"`
+	PostgreSQLClusterState string   `json:"pgcluster_state,omitempty"`
+	State                  string   `json:"state,omitempty"`
+	Version                string   `json:"version,omitempty"`
 }
 
 //+kubebuilder:object:root=true

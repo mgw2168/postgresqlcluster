@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
-	"github.com/kubesphere/controllers/pgcluster"
-	"github.com/kubesphere/controllers/request"
+	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
 )
 
 func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
-	var resp pgcluster.CreateClusterResponse
-	clusterReq := &pgcluster.CreatePgCluster{
+	var resp pkg.CreateClusterResponse
+	clusterReq := &pkg.CreatePgCluster{
 		ClientVersion:   pg.Spec.ClientVersion,
 		Name:            pg.Spec.Name,
 		Namespace:       pg.Spec.Namespace,
@@ -27,7 +26,7 @@ func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v
 		Username:        pg.Spec.Username,
 		Password:        pg.Spec.Password,
 	}
-	respByte, err := request.Call("POST", request.CreateClusterPath, clusterReq)
+	respByte, err := pkg.Call("POST", pkg.CreateClusterPath, clusterReq)
 	if err != nil {
 		klog.Errorf("call create cluster error: %s", err.Error())
 		return
@@ -36,9 +35,12 @@ func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v
 		klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
 		return
 	}
-	if resp.Code == request.Ok {
+
+	if resp.Code == pkg.Ok {
 		// update cluster status
 		pg.Status.PostgreSQLClusterState = v1alpha1.Created
+		// append result to status.condition
+		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
 		err = r.Status().Update(ctx, pg)
 	} else {
 		pg.Status.PostgreSQLClusterState = v1alpha1.Failed

@@ -13,6 +13,7 @@ const (
 	UpdateCluster    = "update_cluster"
 	ScaleCluster     = "scale_cluster"
 	ScaleDownCluster = "scaledown_cluster"
+	RestartCluster   = "restart_cluster"
 	CreateUser       = "create_user"
 	DeleteUser       = "delete_user"
 	UpdateUser       = "update_user"

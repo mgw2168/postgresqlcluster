@@ -107,6 +107,9 @@ spec:
               setSystemAccountPassword:
                 description: '******** update user'
                 type: boolean
+              showSystemAccounts:
+                description: '******** show user'
+                type: boolean
               shutdown:
                 type: boolean
               startup:
@@ -168,8 +171,11 @@ spec:
           status:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
             properties:
+              condition:
+                items:
+                  type: string
+                type: array
               pgcluster_state:
-                description: Condition []string `json:"condition"`
                 type: string
               state:
                 type: string

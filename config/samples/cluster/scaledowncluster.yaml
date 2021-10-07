@@ -8,6 +8,6 @@ spec:
   clientVersion: "4.7.1"
   namespace: "pgtest"
   name: "test001"
-  replicaName: "test001-kmfy"
-  delete-data: "true"
+  rollingUpdate: true
+  deleteData: true
 
