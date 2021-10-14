@@ -18,32 +18,27 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/models/cluster"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/event"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 )
 
 type PostgreSQLClusterResource struct {
 	Namespace string `json:"namespace"`
 	Name      string `json:"name"`
 }
-
-func AppendChannel() {
-	for {
-		res := <-PgClusterResourceChan
-		fmt.Println("======= todo delete resource in channel.....")
-		fmt.Println(res.Name, res.Namespace)
-	}
-}
-
-var (
-	PgClusterResourceChan chan PostgreSQLClusterResource
-)
 
 // PostgreSQLClusterReconciler reconciles a PostgreSQLCluster object
 type PostgreSQLClusterReconciler struct {
@@ -70,82 +65,79 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	if err := r.Get(ctx, req.NamespacedName, pgCluster); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-
-	if pgCluster.Status.PostgreSQLClusterState == "" {
-		pgCluster.Status.PostgreSQLClusterState = v1alpha1.Creating
-		err := r.Status().Update(ctx, pgCluster)
-		return reconcile.Result{}, err
-	}
-
-	if pgCluster.Status.PostgreSQLClusterState == v1alpha1.Creating {
-		if pgCluster.Spec.Action == v1alpha1.CreateCluster {
-			if err := r.createPgCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.UpdateCluster {
-			if err := r.updatePgCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.ScaleCluster {
-			if err := r.scalePgCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.ScaleDownCluster {
-			if err := r.scaleDownPgCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.DeleteCluster {
-			if err := r.deletePgCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.RestartCluster {
-			if err := r.restartCluster(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.CreateUser {
-			if err := r.createPgUser(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.UpdateUser {
-			if err := r.updatePgUser(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.DeleteUser {
-			if err := r.DeletePgUser(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		} else if pgCluster.Spec.Action == v1alpha1.ShowUser {
-			if err := r.listPgUser(ctx, pgCluster); err != nil {
-				klog.Error(err.Error())
-				return ctrl.Result{}, err
-			}
-		}
-		PgClusterResourceChan <- PostgreSQLClusterResource{
-			Namespace: pgCluster.Spec.Namespace,
-			Name:      pgCluster.Spec.Name,
-		}
-	}
 	return ctrl.Result{}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	// 定义个channel用来存储
-	PgClusterResourceChan = make(chan PostgreSQLClusterResource, 10)
-	go AppendChannel()
 	if r.Client == nil {
 		r.Client = mgr.GetClient()
+	}
+	if r.Scheme == nil {
+		r.Scheme = mgr.GetScheme()
 	}
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&v1alpha1.PostgreSQLCluster{}).
 		Complete(r)
+}
+
+func Add(mgr manager.Manager) error {
+	return add(mgr, newReconciler(mgr))
+}
+
+func add(mgr manager.Manager, r reconcile.Reconciler) error {
+	// Create a new controller
+	c, err := controller.New("postgresqlCluster-controller", mgr, controller.Options{Reconciler: r})
+	if err != nil {
+		return err
+	}
+
+	reconcileObj := r.(*PostgreSQLClusterReconciler)
+	// Watch for changes to PostgreSQLCluster
+	err = c.Watch(&source.Kind{Type: &v1alpha1.PostgreSQLCluster{}}, &handler.Funcs{
+		CreateFunc: func(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
+			pg := event.Object.(*v1alpha1.PostgreSQLCluster)
+			if err := cluster.CreatePgCluster(pg); err != nil {
+				klog.Errorf("create Pgcluster resource error: %s", err)
+			}
+			err = reconcileObj.Status().Update(context.TODO(), pg)
+			if err != nil {
+				if errors.IsConflict(err) {
+					return
+				}
+				klog.Errorf("update Pgcluster status error: %s", err)
+			}
+		},
+
+		UpdateFunc: func(updateEvent event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
+			oldCluster := updateEvent.ObjectOld.(*v1alpha1.PostgreSQLCluster)
+			newCluster := updateEvent.ObjectNew.(*v1alpha1.PostgreSQLCluster)
+
+			err := doUpdateCluster(oldCluster, newCluster)
+			if err != nil {
+				klog.Errorf("update cluster error: %s", err)
+			}
+
+			err = reconcileObj.Status().Update(context.TODO(), newCluster)
+			if err != nil {
+
+				klog.Errorf("update Pgcluster status error: %s", err)
+			}
+		},
+		DeleteFunc: func(deleteEvent event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
+			pg := deleteEvent.Object.(*v1alpha1.PostgreSQLCluster)
+			err := cluster.DeletePgCluster(pg)
+			if err != nil {
+				klog.Errorf("delete cluster error: %s", err)
+			}
+		},
+	})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func newReconciler(mgr manager.Manager) reconcile.Reconciler {
+	return &PostgreSQLClusterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}
 }

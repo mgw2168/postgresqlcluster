@@ -1,14 +1,13 @@
-package controllers
+package cluster
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.CreateClusterResponse
 	clusterReq := &pkg.CreatePgCluster{
 		ClientVersion:   pg.Spec.ClientVersion,
@@ -25,6 +24,8 @@ func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v
 		Database:        pg.Spec.Database,
 		Username:        pg.Spec.Username,
 		Password:        pg.Spec.Password,
+		StorageConfig:   pg.Spec.StorageConfig,
+		PVCSize:         pg.Spec.PVCSize,
 	}
 	respByte, err := pkg.Call("POST", pkg.CreateClusterPath, clusterReq)
 	if err != nil {
@@ -35,16 +36,22 @@ func (r *PostgreSQLClusterReconciler) createPgCluster(ctx context.Context, pg *v
 		klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
 		return
 	}
-
 	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Created
-		// append result to status.condition
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Success
 	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Failed
+	}
+
+	res, ok := pg.Status.Condition[v1alpha1.CreateCluster]
+	if ok {
+		res.Code = resp.Code
+		res.Msg = resp.Msg
+	} else {
+		pg.Status.Condition = map[string]v1alpha1.ApiResult{
+			v1alpha1.CreateCluster: {
+				Code: resp.Code,
+				Msg:  resp.Msg,
+			}}
 	}
 	return
 }

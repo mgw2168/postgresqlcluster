@@ -2,7 +2,6 @@ package pkg
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/klog/v2"
@@ -39,6 +38,5 @@ func DoRequest(method, url string, body []byte) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 	res, err := ioutil.ReadAll(resp.Body)
-	fmt.Println("///res:", string(res), "======end")
 	return res, err
 }

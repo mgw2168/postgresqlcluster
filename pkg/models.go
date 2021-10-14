@@ -25,6 +25,8 @@ type CreatePgCluster struct {
 	Database        string
 	Username        string
 	Password        string
+	StorageConfig   string
+	PVCSize         string
 }
 
 type CreateClusterResponse struct {
