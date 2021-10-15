@@ -17,20 +17,28 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"flag"
 	"os"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"time"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"k8s.io/client-go/kubernetes"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
+
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	"k8s.io/client-go/informers"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	"sigs.k8s.io/controller-runtime/pkg/manager"
 
 	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/controllers"
@@ -82,6 +90,30 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PostgreSQLCluster")
+		os.Exit(1)
+	}
+	//storageclass逻辑
+	// create a client for kube resources
+	clintset, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
+	if err != nil {
+		os.Exit(1)
+	}
+	sharedInformers := informers.NewSharedInformerFactory(clintset, time.Minute)
+	class := sharedInformers.Storage().V1().StorageClasses()
+	indormerSc := class.Informer()
+	// indormerScLister := class.Lister()
+	indormerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			mObj := obj.(v1.Object)
+			klog.Infof("New sc Added to Store: %s", mObj.GetName())
+		},
+	})
+	stopCh := make(chan struct{})
+	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
+		sharedInformers.Start(stopCh)
+		return nil
+	})); err != nil {
+		setupLog.Error(err, "unable to set up informer")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder
