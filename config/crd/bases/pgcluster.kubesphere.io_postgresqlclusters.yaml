@@ -89,6 +89,14 @@ spec:
                 type: integer
               passwordType:
                 type: string
+              podAnnotation:
+                items:
+                  additionalProperties:
+                    type: string
+                  type: object
+                type: array
+              postgresqlParams:
+                type: string
               pvcSize:
                 type: string
               replicaCount:
@@ -164,7 +172,6 @@ spec:
               username:
                 type: string
             required:
-            - action
             - clientVersion
             - namespace
             type: object
@@ -172,14 +179,20 @@ spec:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
             properties:
               condition:
-                items:
-                  type: string
-                type: array
-              pgcluster_state:
-                type: string
+                additionalProperties:
+                  description: ApiResult defines the result of pg operator ApiServer
+                  properties:
+                    api:
+                      type: string
+                    code:
+                      type: string
+                    data:
+                      type: string
+                    msg:
+                      type: string
+                  type: object
+                type: object
               state:
-                type: string
-              version:
                 type: string
             type: object
         type: object

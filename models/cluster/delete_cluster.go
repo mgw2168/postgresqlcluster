@@ -1,23 +1,20 @@
-package controllers
+package cluster
 
 import (
-	"context"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/pkg"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) deletePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.DeleteClusterResponse
 	clusterReq := &pkg.DeleteClusterRequest{
 		Clustername:   pg.Spec.Name,
-		Selector:      pg.Spec.Selector,
 		ClientVersion: pg.Spec.ClientVersion,
 		Namespace:     pg.Spec.Namespace,
-		AllFlag:       pg.Spec.AllFlag,
-		DeleteBackups: pg.Spec.DeleteBackups,
-		DeleteData:    pg.Spec.DeleteData,
+		DeleteBackups: false,
+		DeleteData:    false,
 	}
 	respByte, err := pkg.Call("POST", pkg.DeleteClusterPath, clusterReq)
 	if err != nil {
@@ -30,13 +27,21 @@ func (r *PostgreSQLClusterReconciler) deletePgCluster(ctx context.Context, pg *v
 		return
 	}
 	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Deleted
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Success
 	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Failed
+	}
+
+	res, ok := pg.Status.Condition[v1alpha1.DeleteCluster]
+	if ok {
+		res.Code = resp.Code
+		res.Msg = resp.Msg
+	} else {
+		pg.Status.Condition = map[string]v1alpha1.ApiResult{
+			v1alpha1.DeleteCluster: {
+				Code: resp.Code,
+				Msg:  resp.Msg,
+			}}
 	}
 	return
 }

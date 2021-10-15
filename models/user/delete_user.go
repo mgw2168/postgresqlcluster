@@ -1,21 +1,20 @@
-package controllers
+package user
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) DeletePgUser(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+func DeletePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.DeleteUserResponse
+	var clusterName []string
+	clusterName = append(clusterName, pg.Spec.Name)
 	deleteUserReq := &pkg.DeleteUserRequest{
-		AllFlag:       pg.Spec.AllFlag,
 		ClientVersion: pg.Spec.ClientVersion,
-		Clusters:      pg.Spec.ClusterName,
+		Clusters:      clusterName,
 		Namespace:     pg.Spec.Namespace,
-		Selector:      pg.Spec.Selector,
 		Username:      pg.Spec.Username,
 	}
 	respByte, err := pkg.Call("POST", pkg.DeleteUserPath, deleteUserReq)
@@ -28,13 +27,21 @@ func (r *PostgreSQLClusterReconciler) DeletePgUser(ctx context.Context, pg *v1al
 		return
 	}
 	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Created
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Success
 	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Failed
+	}
+
+	res, ok := pg.Status.Condition[v1alpha1.DeleteUser]
+	if ok {
+		res.Code = resp.Code
+		res.Msg = resp.Msg
+	} else {
+		pg.Status.Condition = map[string]v1alpha1.ApiResult{
+			v1alpha1.DeleteUser: {
+				Code: resp.Code,
+				Msg:  resp.Msg,
+			}}
 	}
 	return
 }

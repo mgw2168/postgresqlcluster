@@ -1,19 +1,19 @@
-package controllers
+package cluster
 
 import (
-	"context"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/pkg"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) restartCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+// todo annotation
+func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.RestartResponse
 	restartReq := &pkg.RestartRequest{
 		Namespace:     pg.Spec.Namespace,
 		ClusterName:   pg.Spec.Name,
-		RollingUpdate: pg.Spec.RollingUpdate,
+		RollingUpdate: true,
 		Targets:       pg.Spec.Targets,
 		ClientVersion: pg.Spec.ClientVersion,
 	}
@@ -29,12 +29,21 @@ func (r *PostgreSQLClusterReconciler) restartCluster(ctx context.Context, pg *v1
 	}
 	if resp.Code == pkg.Ok {
 		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Created
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Success
 	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Failed
+	}
+
+	res, ok := pg.Status.Condition[v1alpha1.RestartCluster]
+	if ok {
+		res.Code = resp.Code
+		res.Msg = resp.Msg
+	} else {
+		pg.Status.Condition = map[string]v1alpha1.ApiResult{
+			v1alpha1.RestartCluster: {
+				Code: resp.Code,
+				Msg:  resp.Msg,
+			}}
 	}
 	return
 }

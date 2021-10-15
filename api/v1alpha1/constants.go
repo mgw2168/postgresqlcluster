@@ -1,11 +1,8 @@
 package v1alpha1
 
 const (
-	Creating = "creating"
-	Deleted  = "deleted"
-	Failed   = "failed"
-	Created  = "created"
-	Scaled   = "scaled"
+	Failed  = "failed"
+	Success = "success"
 
 	// action of the cluster or user
 	CreateCluster    = "create_cluster"
@@ -18,8 +15,4 @@ const (
 	DeleteUser       = "delete_user"
 	UpdateUser       = "update_user"
 	ShowUser         = "show_user"
-
-	// cluster status
-	ClusterStatusUnknown = "unknown"
-	// 状态更新异常
 )

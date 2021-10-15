@@ -26,7 +26,7 @@ import (
 
 // PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
 type PostgreSQLClusterSpec struct {
-	Action string `json:"action"`
+	Action string `json:"action,omitempty"`
 	// ******** create cluster params ********
 	ClientVersion string `json:"clientVersion"`
 	// cluster name
@@ -43,6 +43,7 @@ type PostgreSQLClusterSpec struct {
 	Database        string `json:"database,omitempty"`
 	Username        string `json:"username,omitempty"`
 	Password        string `json:"password,omitempty"`
+	StorageConfig   string `json:"storageConfig,omitempty"`
 
 	// ******** update cluster
 	ClusterName []string `json:"clusterName,omitempty"`
@@ -59,17 +60,17 @@ type PostgreSQLClusterSpec struct {
 	DeleteData    bool   `json:"deleteData,omitempty"`
 
 	// ******** scale cluster
-	NodeLabel     string          `json:"nodeLabel,omitempty"`
-	ServiceType   string          `json:"serviceType,omitempty"`
-	StorageConfig string          `json:"storageConfig,omitempty"`
-	Tolerations   []v1.Toleration `json:"tolerations,omitempty"`
+	NodeLabel   string          `json:"nodeLabel,omitempty"`
+	ServiceType string          `json:"serviceType,omitempty"`
+	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
 	// ******** scale down
 	ReplicaName         string `json:"replicaName,omitempty"`
 	ScaleDownDeleteData string `json:"delete-data,omitempty"`
 	// ******** restart cluster
-	RollingUpdate bool     `json:"rollingUpdate,omitempty"`
-	Targets       []string `json:"targets,omitempty"`
+	RollingUpdate bool                `json:"rollingUpdate,omitempty"`
+	Targets       []string            `json:"targets,omitempty"`
+	PodAnnotation []map[string]string `json:"podAnnotation,omitempty"`
 
 	// ******** create user
 	ManagedUser     bool   `json:"managedUser,omitempty"`
@@ -82,14 +83,22 @@ type PostgreSQLClusterSpec struct {
 
 	// ******** show user
 	ShowSystemAccounts bool `json:"showSystemAccounts,omitempty"`
+
+	ClusterConfig string `json:"postgresqlParams,omitempty"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
-	Condition              []string `json:"condition,omitempty"`
-	PostgreSQLClusterState string   `json:"pgcluster_state,omitempty"`
-	State                  string   `json:"state,omitempty"`
-	Version                string   `json:"version,omitempty"`
+	Condition map[string]ApiResult `json:"condition,omitempty"`
+	State     string               `json:"state,omitempty"`
+}
+
+// ApiResult defines the result of pg operator ApiServer
+type ApiResult struct {
+	Api  string `json:"api,omitempty"`
+	Code string `json:"code,omitempty"`
+	Msg  string `json:"msg,omitempty"`
+	Data string `json:"data,omitempty"`
 }
 
 //+kubebuilder:object:root=true

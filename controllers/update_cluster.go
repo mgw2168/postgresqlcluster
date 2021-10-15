@@ -1,47 +1,82 @@
 package controllers
 
 import (
-	"context"
-	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
-	"github.com/kubesphere/pkg"
+	"github.com/kubesphere/models/cluster"
+	"github.com/kubesphere/models/user"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) updatePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
-	var resp pkg.UpdateClusterResponse
-	updateReq := &pkg.UpdateClusterRequest{
-		Clustername:   pg.Spec.ClusterName,
-		ClientVersion: pg.Spec.ClientVersion,
-		Namespace:     pg.Spec.Namespace,
-		AllFlag:       pg.Spec.AllFlag,
-		Autofail:      pg.Spec.AutoFail,
-		CPULimit:      pg.Spec.CPULimit,
-		CPURequest:    pg.Spec.CPURequest,
-		MemoryLimit:   pg.Spec.MemoryLimit,
-		MemoryRequest: pg.Spec.MemoryRequest,
-		PVCSize:       pg.Spec.PVCSize,
-		Startup:       pg.Spec.Startup,
-		Shutdown:      pg.Spec.Shutdown,
-		Tolerations:   pg.Spec.Tolerations,
+func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
+	// update pvc
+	if oldObj.Spec.PVCSize != newObj.Spec.PVCSize {
+		err = cluster.UpdatePgCluster(newObj)
+		if err != nil {
+			klog.Errorf("update pvc error: %s", err)
+		}
 	}
-	respByte, err := pkg.Call("POST", pkg.UpdateClusterPath, updateReq)
-	if err != nil {
-		klog.Errorf("call update cluster error: %s", err.Error())
-		return
+	// update cpu and memory
+	if oldObj.Spec.CPURequest != newObj.Spec.CPURequest || oldObj.Spec.CPULimit != newObj.Spec.CPULimit ||
+		oldObj.Spec.MemoryLimit != newObj.Spec.MemoryLimit ||
+		oldObj.Spec.MemoryRequest != newObj.Spec.MemoryRequest {
+		err = cluster.UpdatePgCluster(newObj)
+		if err != nil {
+			klog.Errorf("update cpu and memory error: %s", err.Error())
+		}
 	}
-	if err = json.Unmarshal(respByte, &resp); err != nil {
-		klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
-		return
+	// scale up
+	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount {
+		err = cluster.ScaleUpPgCluster(newObj)
+		if err != nil {
+			klog.Errorf("scale up error: %s", err.Error())
+		}
 	}
-	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Created
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
-	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+
+	// scale down
+	if oldObj.Spec.ReplicaName != newObj.Spec.ReplicaName {
+		err = cluster.ScaleDownPgCluster(newObj)
+		if err != nil {
+			klog.Errorf("scale down error: %s", err.Error())
+		}
 	}
-	return
+
+	// restart todo TODO
+	if oldObj.Spec.ReplicaName != newObj.Spec.ReplicaName {
+		err = cluster.RestartCluster(newObj)
+		if err != nil {
+			klog.Errorf("restart cluster error: %s", err.Error())
+		}
+	}
+
+	// create user
+	if oldObj.Spec.Username != newObj.Spec.Username || oldObj.Spec.Password != newObj.Spec.Password && newObj.Spec.Password != "" {
+		err = user.CreatePgUser(newObj)
+		if err != nil {
+			klog.Errorf("create pg user error: %s", err.Error())
+		}
+	}
+
+	// delete user
+	if oldObj.Spec.Username != newObj.Spec.Username && newObj.Spec.Password == "" {
+		err = user.DeletePgUser(newObj)
+		if err != nil {
+			klog.Errorf("update password error: %s", err.Error())
+		}
+	}
+
+	// update user password
+	if oldObj.Spec.Username == newObj.Spec.Username && oldObj.Spec.Password != newObj.Spec.Password {
+		err = user.UpdatePgUser(newObj)
+		if err != nil {
+			klog.Errorf("update password error: %s", err.Error())
+		}
+	}
+	// list user
+	if oldObj.Spec.Username != newObj.Spec.Username && newObj.Spec.Password == "" {
+		err = user.ListPgUser(newObj)
+		if err != nil {
+			klog.Errorf("update password error: %s", err.Error())
+		}
+	}
+	return nil
 }

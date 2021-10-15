@@ -12,5 +12,3 @@ spec:
   allFlag: false
   deleteBackups: true
   deleteData: true
-
-

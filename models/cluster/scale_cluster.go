@@ -1,25 +1,21 @@
-package controllers
+package cluster
 
 import (
-	"context"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/pkg"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/klog/v2"
 )
 
-func (r *PostgreSQLClusterReconciler) scalePgCluster(ctx context.Context, pg *v1alpha1.PostgreSQLCluster) (err error) {
+func ScaleUpPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.ClusterScaleResponse
 	scaleReq := &pkg.ClusterScaleRequest{
 		Name:          pg.Spec.Name,
 		ClientVersion: pg.Spec.ClientVersion,
 		Namespace:     pg.Spec.Namespace,
 		CCPImageTag:   pg.Spec.CCPImageTag,
-		NodeLabel:     pg.Spec.NodeLabel,
 		ReplicaCount:  pg.Spec.ReplicaCount,
-		ServiceType:   pg.Spec.ServiceType,
 		StorageConfig: pg.Spec.StorageConfig,
-		Tolerations:   pg.Spec.Tolerations,
 	}
 	respByte, err := pkg.Call("POST", pkg.ScaleClusterPath+pg.Spec.Name, scaleReq)
 	if err != nil {
@@ -29,16 +25,25 @@ func (r *PostgreSQLClusterReconciler) scalePgCluster(ctx context.Context, pg *v1
 
 	if err = json.Unmarshal(respByte, &resp); err != nil {
 		klog.Errorf("scale cluster json unmarshal error: ", err.Error())
+		return
 	}
 
 	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.PostgreSQLClusterState = v1alpha1.Scaled
-		pg.Status.Condition = append(pg.Status.Condition, string(respByte))
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Success
 	} else {
-		pg.Status.PostgreSQLClusterState = v1alpha1.Failed
-		err = r.Status().Update(ctx, pg)
+		pg.Status.State = v1alpha1.Failed
+	}
+
+	res, ok := pg.Status.Condition[v1alpha1.ScaleCluster]
+	if ok {
+		res.Code = resp.Code
+		res.Msg = resp.Msg
+	} else {
+		pg.Status.Condition = map[string]v1alpha1.ApiResult{
+			v1alpha1.ScaleCluster: {
+				Code: resp.Code,
+				Msg:  resp.Msg,
+			}}
 	}
 	return
 }

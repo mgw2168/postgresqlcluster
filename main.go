@@ -74,18 +74,16 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-		Scheme:                 scheme,
-		MetricsBindAddress:     metricsAddr,
-		Port:                   9443,
-		HealthProbeBindAddress: probeAddr,
-		LeaderElection:         enableLeaderElection,
-		LeaderElectionID:       "d61cefd2.kubesphere.io",
-	})
+	kubeconfig := ctrl.GetConfigOrDie()
+	mgr, err := manager.New(kubeconfig, manager.Options{Scheme: scheme})
+
+	err = controllers.Add(mgr)
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
+
+	//
 
 	if err = (&controllers.PostgreSQLClusterReconciler{
 		Client: mgr.GetClient(),
