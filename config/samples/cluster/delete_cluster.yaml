@@ -3,12 +3,6 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # delete cluster
-  action: "delete_cluster"
   clientVersion: "4.7.1"
   name: "test001"
   namespace: "pgtest"
-  Selector: ""
-  allFlag: false
-  deleteBackups: true
-  deleteData: true

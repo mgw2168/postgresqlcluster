@@ -4,21 +4,12 @@ metadata:
   name: postgresqlcluster-sample
 spec:
   # update cluster
-  action: "update_cluster"
-  clientVersion: "4.7.1"
+  name: "test001"
   namespace: "pgtest"
-  clusterName:
-    - "test001"
-  Selector: "name=test001"
-  allFlag: false
-  # todo int
-  autofail: 1
   cpuLimit: "600m"
   cpuRequest: "600m"
   memoryLimit: "600Mi"
   memoryRequest: "600Mi"
   pvcSize: "10Gi"
-  startup: true
-  shutdown: false
-  tolerations: []
+
 

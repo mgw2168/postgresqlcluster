@@ -25,7 +25,7 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		}
 	}
 	// scale up
-	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount {
+	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount && newObj.Spec.ReplicaCount > oldObj.Spec.ReplicaCount {
 		err = cluster.ScaleUpPgCluster(newObj)
 		if err != nil {
 			klog.Errorf("scale up error: %s", err.Error())
@@ -41,7 +41,7 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	// restart todo TODO
-	if oldObj.Spec.ReplicaName != newObj.Spec.ReplicaName {
+	if oldObj.Spec.Restart {
 		err = cluster.RestartCluster(newObj)
 		if err != nil {
 			klog.Errorf("restart cluster error: %s", err.Error())
@@ -49,7 +49,8 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	// create user
-	if oldObj.Spec.Username != newObj.Spec.Username || oldObj.Spec.Password != newObj.Spec.Password && newObj.Spec.Password != "" {
+	//if oldObj.Spec.Username != newObj.Spec.Username || oldObj.Spec.Password != newObj.Spec.Password && newObj.Spec.Password != "" {
+	if len(newObj.Spec.Users) > 0 {
 		err = user.CreatePgUser(newObj)
 		if err != nil {
 			klog.Errorf("create pg user error: %s", err.Error())

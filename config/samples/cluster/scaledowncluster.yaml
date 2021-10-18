@@ -3,11 +3,7 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # scale down cluster
-  action: "scaledown_cluster"
-  clientVersion: "4.7.1"
   namespace: "pgtest"
   name: "test001"
-  rollingUpdate: true
-  deleteData: true
+  replicaName: "test001-ksdl"
 

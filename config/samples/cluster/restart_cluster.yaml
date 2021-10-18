@@ -3,10 +3,7 @@ kind: PostgreSQLCluster
 metadata:
   name: postgresqlcluster-sample
 spec:
-  # restart cluster
-  action: "scaledown_cluster"
   clientVersion: "4.7.1"
   namespace: "pgtest"
   name: "test001"
-  replicaName: "test001-kmfy"
-  targets: []
+  restart: true

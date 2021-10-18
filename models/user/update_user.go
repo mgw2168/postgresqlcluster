@@ -13,7 +13,7 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	clusterName = append(clusterName, pg.Spec.Name)
 	updateUserReq := &pkg.UpdateUserRequest{
 		Clusters:                 clusterName,
-		ClientVersion:            pg.Spec.ClientVersion,
+		ClientVersion:            "4.7.1",
 		Namespace:                pg.Spec.Namespace,
 		Username:                 pg.Spec.Username,
 		Password:                 pg.Spec.Password,
@@ -37,16 +37,33 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		pg.Status.State = v1alpha1.Failed
 	}
 
-	res, ok := pg.Status.Condition[v1alpha1.UpdateUser]
-	if ok {
-		res.Code = resp.Code
-		res.Msg = resp.Msg
-	} else {
-		pg.Status.Condition = map[string]v1alpha1.ApiResult{
-			v1alpha1.UpdateUser: {
-				Code: resp.Code,
-				Msg:  resp.Msg,
-			}}
+	//res, ok := pg.Status.Condition[v1alpha1.UpdateUser]
+	//if ok {
+	//	res.Code = resp.Code
+	//	res.Msg = resp.Msg
+	//} else {
+	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
+	//		v1alpha1.UpdateUser: {
+	//			Code: resp.Code,
+	//			Msg:  resp.Msg,
+	//		}}
+	//}
+	flag := true
+	for _, res := range pg.Status.Condition {
+		if res.Api == v1alpha1.UpdateUser {
+			flag = false
+			res.Code = resp.Code
+			res.Msg = resp.Msg
+			break
+		}
+	}
+	if flag {
+		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
+			Api:  v1alpha1.UpdateUser,
+			Code: resp.Code,
+			Msg:  resp.Msg,
+			Data: "",
+		})
 	}
 	return
 }

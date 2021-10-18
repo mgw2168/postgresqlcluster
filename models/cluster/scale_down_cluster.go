@@ -12,7 +12,7 @@ func ScaleDownPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	respByte, err := pkg.Call("GET",
 		pkg.ScaleDownClusterPath+
 			pg.Spec.Name+
-			"?version="+pg.Spec.ClientVersion+
+			"?version=4.7.1"+
 			"&namespace="+pg.Spec.Namespace+
 			"&replica-name="+pg.Spec.ReplicaName+
 			"&delete-data=false",
@@ -32,16 +32,33 @@ func ScaleDownPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	} else {
 		pg.Status.State = v1alpha1.Failed
 	}
-	res, ok := pg.Status.Condition[v1alpha1.ScaleDownCluster]
-	if ok {
-		res.Code = resp.Code
-		res.Msg = resp.Msg
-	} else {
-		pg.Status.Condition = map[string]v1alpha1.ApiResult{
-			v1alpha1.ScaleDownCluster: {
-				Code: resp.Code,
-				Msg:  resp.Msg,
-			}}
+	//res, ok := pg.Status.Condition[v1alpha1.ScaleDownCluster]
+	//if ok {
+	//	res.Code = resp.Code
+	//	res.Msg = resp.Msg
+	//} else {
+	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
+	//		v1alpha1.ScaleDownCluster: {
+	//			Code: resp.Code,
+	//			Msg:  resp.Msg,
+	//		}}
+	//}
+	flag := true
+	for _, res := range pg.Status.Condition {
+		if res.Api == v1alpha1.ScaleDownCluster {
+			flag = false
+			res.Code = resp.Code
+			res.Msg = resp.Msg
+			break
+		}
+	}
+	if flag {
+		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
+			Api:  v1alpha1.ScaleDownCluster,
+			Code: resp.Code,
+			Msg:  resp.Msg,
+			Data: "",
+		})
 	}
 	return
 }

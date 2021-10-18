@@ -1,15 +1,12 @@
 apiVersion: pgcluster.kubesphere.io/v1alpha1
 kind: PostgreSQLCluster
 metadata:
-  name: postgresqlcluster-sample
+  name: test001
 spec:
   # show user
-  action: "show_user"
+  name: "test001"
   clientVersion: "4.7.1"
   namespace: "pgtest"
-  clusterName:
-    - "test001"
-  allFlag: false
   showSystemAccounts: true
 
 

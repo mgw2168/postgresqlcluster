@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"flag"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"os"
 	"time"
 
@@ -30,7 +31,6 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/klog/v2"
 
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
@@ -74,16 +74,23 @@ func main() {
 
 	ctrl.SetLogger(zap.New(zap.UseFlagOptions(&opts)))
 
-	kubeconfig := ctrl.GetConfigOrDie()
-	mgr, err := manager.New(kubeconfig, manager.Options{Scheme: scheme})
-
-	err = controllers.Add(mgr)
+	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
+		Scheme:                 scheme,
+		MetricsBindAddress:     metricsAddr,
+		Port:                   9443,
+		HealthProbeBindAddress: probeAddr,
+		LeaderElection:         enableLeaderElection,
+		LeaderElectionID:       "d61cefd2.kubesphere.io",
+	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
 		os.Exit(1)
 	}
-
-	//
+	err = controllers.Add(mgr)
+	if err != nil {
+		setupLog.Error(err, "add controller error")
+		os.Exit(1)
+	}
 
 	if err = (&controllers.PostgreSQLClusterReconciler{
 		Client: mgr.GetClient(),

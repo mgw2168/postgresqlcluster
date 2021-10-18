@@ -9,9 +9,11 @@ import (
 
 func ListPgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.ShowUserResponse
+	var clusterName []string
+	clusterName = append(clusterName, pg.Spec.Name)
 	listUserReq := &pkg.ShowUserRequest{
-		Clusters:           pg.Spec.ClusterName,
-		ClientVersion:      pg.Spec.ClientVersion,
+		Clusters:           clusterName,
+		ClientVersion:      "4.7.1",
 		Namespace:          pg.Spec.Namespace,
 		ShowSystemAccounts: pg.Spec.ShowSystemAccounts,
 	}
@@ -30,17 +32,34 @@ func ListPgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		pg.Status.State = v1alpha1.Failed
 	}
 
-	res, ok := pg.Status.Condition[v1alpha1.ShowUser]
-	if ok {
-		res.Code = resp.Code
-		res.Msg = resp.Msg
-	} else {
-		pg.Status.Condition = map[string]v1alpha1.ApiResult{
-			v1alpha1.ShowUser: {
-				Code: resp.Code,
-				Msg:  resp.Msg,
-			}}
-	}
+	//res, ok := pg.Status.Condition[v1alpha1.ShowUser]
+	//if ok {
+	//	res.Code = resp.Code
+	//	res.Msg = resp.Msg
+	//} else {
+	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
+	//		v1alpha1.ShowUser: {
+	//			Code: resp.Code,
+	//			Msg:  resp.Msg,
+	//		}}
+	//}
 
+	flag := true
+	for _, res := range pg.Status.Condition {
+		if res.Api == v1alpha1.ShowUser {
+			flag = false
+			res.Code = resp.Code
+			res.Msg = resp.Msg
+			break
+		}
+	}
+	if flag {
+		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
+			Api:  v1alpha1.ShowUser,
+			Code: resp.Code,
+			Msg:  resp.Msg,
+			Data: "",
+		})
+	}
 	return
 }

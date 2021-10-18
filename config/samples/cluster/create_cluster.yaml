@@ -1,23 +1,25 @@
 apiVersion: pgcluster.kubesphere.io/v1alpha1
 kind: PostgreSQLCluster
 metadata:
-  name: postgresqlcluster-test
+  name: pg-test-01
   namespace: pgtest
 spec:
   clientVersion: "4.7.1"
   name: "test001"
-  namespace: "pg-cluster"
+  namespace: "pgtest"
   syncReplication: true
   ccpImage: ""
   ccpImageTag: ""
   replicaCount: 1
-  cpuLimit: "200m"
-  cpuRequest: "200m"
+  cpuLimit: "500m"
+  cpuRequest: "500m"
   memoryLimit: "1Gi"
   memoryRequest: "1Gi"
   database: "db1"
   username: "pguser1"
   password: "pass1"
+  pvcSize: "10Gi"
+
   # restart
   rollingUpdate: true
 #  podAnnotation:
