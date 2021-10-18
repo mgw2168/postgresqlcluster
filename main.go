@@ -25,16 +25,16 @@ import (
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
 
-	"k8s.io/client-go/kubernetes"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/klog/v2"
-
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/kubesphere/models"
+	sv1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	"k8s.io/client-go/informers"
+	"k8s.io/client-go/kubernetes"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
@@ -100,22 +100,37 @@ func main() {
 	}
 	sharedInformers := informers.NewSharedInformerFactory(clintset, time.Minute)
 	class := sharedInformers.Storage().V1().StorageClasses()
-	indormerSc := class.Informer()
-	// indormerScLister := class.Lister()
-	indormerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
+	informerSc := class.Informer()
+	// informerScLister := class.Lister()
+	var Pgo models.PgoConfig
+	if _, err := Pgo.GetConfig(clintset, "pgo"); err != nil {
+		klog.Error(err)
+	}
+	informerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			mObj := obj.(v1.Object)
-			klog.Infof("New sc Added to Store: %s", mObj.GetName())
+			mObj := obj.(*sv1.StorageClass)
+			Pgo.UpdateCm(clintset, "pgo", mObj)
+
+			klog.Infof("New sc Added to Store: %s", mObj.Name)
 		},
 	})
 	stopCh := make(chan struct{})
 	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
 		sharedInformers.Start(stopCh)
+		sharedInformers.WaitForCacheSync(stopCh)
 		return nil
 	})); err != nil {
-		setupLog.Error(err, "unable to set up informer")
+		setupLog.Error(err, "unable to set up sc informer")
 		os.Exit(1)
 	}
+	// scNames, err := informerScLister.List(labels.Everything())
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// for idx, sc := range scNames {
+	// 	klog.Info("%d -> %s\n", idx+1, sc.GenerateName)
+	// }
+
 	//+kubebuilder:scaffold:builder
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
