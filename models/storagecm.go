@@ -8,12 +8,12 @@ import (
 
 	crv1 "github.com/kubesphere/api/v1alpha1"
 	log "github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
 	v1 "k8s.io/api/core/v1"
 	scv1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	"sigs.k8s.io/yaml"
 )
 
 const (
@@ -24,17 +24,17 @@ const (
 var StorageSpec crv1.PgStorageSpec
 
 type PgoConfig struct {
-	BasicAuth       string
-	Cluster         ClusterStruct
-	Pgo             PgoStruct
-	PrimaryStorage  string
-	WALStorage      string
-	BackupStorage   string
-	ReplicaStorage  string
-	BackrestStorage string
-	PGAdminStorage  string
-	Storage         map[string]StorageStruct
-	OpenShift       bool
+	BasicAuth       string                   `json:"BasicAuth"`
+	Cluster         ClusterStruct            `json:"Cluster"`
+	Pgo             PgoStruct                `json:"Pgo"`
+	PrimaryStorage  string                   `json:"PrimaryStorage"`
+	WALStorage      string                   `json:"WALStorage"`
+	BackupStorage   string                   `json:"BackupStorage"`
+	ReplicaStorage  string                   `json:"ReplicaStorage"`
+	BackrestStorage string                   `json:"BackrestStorage"`
+	PGAdminStorage  string                   `json:"PGAdminStorage"`
+	Storage         map[string]StorageStruct `json:"Storage"`
+	OpenShift       bool                     `json:"OpenShift"`
 }
 type StorageStruct struct {
 	AccessMode         string
@@ -109,15 +109,15 @@ func getOperatorConfigMap(clientset kubernetes.Interface, namespace string) (*v1
 	return clientset.CoreV1().ConfigMaps(namespace).Get(ctx, CustomConfigMapName, metav1.GetOptions{})
 }
 
-// func updateOperatorConfigMap(clientset kubernetes.Interface, namespace string, Cm *v1.ConfigMap) (*v1.ConfigMap, error) {
-// 	ctx := context.TODO()
+func updateOperatorConfigMap(clientset kubernetes.Interface, namespace string, Cm *v1.ConfigMap) (*v1.ConfigMap, error) {
+	ctx := context.TODO()
 
-// 	return clientset.CoreV1().ConfigMaps(namespace).Update(ctx, Cm, metav1.UpdateOptions{})
-// }
+	return clientset.CoreV1().ConfigMaps(namespace).Update(ctx, Cm, metav1.UpdateOptions{})
+}
 
-func (c *PgoConfig) GetStorageSpec(name string) (crv1.PgStorageSpec, error) {
+func (c *PgoConfig) GetStorageSpec(name string) (StorageStruct, error) {
 	var err error
-	storage := crv1.PgStorageSpec{}
+	storage := StorageStruct{}
 
 	s, ok := c.Storage[name]
 	if !ok {
@@ -132,6 +132,28 @@ func (c *PgoConfig) GetStorageSpec(name string) (crv1.PgStorageSpec, error) {
 	storage.StorageType = s.StorageType
 	storage.MatchLabels = s.MatchLabels
 	storage.SupplementalGroups = s.SupplementalGroups
+
+	if storage.MatchLabels != "" {
+		test := strings.Split(storage.MatchLabels, "=")
+		if len(test) != 2 {
+			err = errors.New("invalid Storage config " + name + " MatchLabels needs to be in key=value format.")
+			log.Error(err)
+			return storage, err
+		}
+	}
+
+	return storage, err
+}
+func (c *PgoConfig) GenStorageSpec(name string, scClass string) (StorageStruct, error) {
+	var err error
+	storage := StorageStruct{}
+
+	storage.StorageClass = scClass
+	storage.AccessMode = "ReadWriteOnce"
+	storage.Size = "1Gi"
+	storage.StorageType = "dynamic"
+	// storage.MatchLabels = s.MatchLabels
+	// storage.SupplementalGroups = s.SupplementalGroups
 
 	if storage.MatchLabels != "" {
 		test := strings.Split(storage.MatchLabels, "=")
@@ -166,6 +188,7 @@ func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, s
 		log.Errorf("could not get ConfigMap: %s", err.Error())
 		return nil, err
 	}
+	scName := sc.Name
 	str := cMap.Data[PATH]
 	scyamlFile := []byte(str)
 	if err := yaml.Unmarshal(scyamlFile, c); err != nil {
@@ -173,21 +196,34 @@ func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, s
 		return nil, err
 	}
 
-	fmt.Println(c)
-
-	// n := 0
-	// for k, v := range c.Storage {
-	// 	StorageSpec, err = c.GetStorageSpec(k)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	if k == scName {
-	// 		break
-	// 	}
-	// 	log.Infof("Config: %s  %s ", v.StorageClass, k)
-	// }
-	// if n == len(c.Storage) {
-	// 	log.Infof("Config: %q x", scName)
-	// }
-	return cMap, nil
+	n := 0
+	for k, v := range c.Storage {
+		// StorageSpec, err = c.GetStorageSpec(k)
+		if err != nil {
+			return nil, err
+		}
+		if k == scName {
+			break
+		}
+		log.Infof("Configd: %s  %s ", v.StorageClass, k)
+		n = n + 1
+		if n == len(c.Storage) {
+			newsc, err := c.GenStorageSpec(scName, scName)
+			fmt.Println(newsc)
+			if err != nil {
+				log.Errorf("AddStorageSpec: %v", err)
+			}
+			c.Storage[scName] = newsc
+			log.Infof("Config: %q x", scName)
+		}
+	}
+	//填充cm
+	cData, _ := yaml.Marshal(c)
+	cMap.Data[PATH] = string(cData)
+	cM, err := updateOperatorConfigMap(clientset, namespace, cMap)
+	fmt.Println(string(cData))
+	if err != nil {
+		log.Error("Config: %v x", err)
+	}
+	return cM, nil
 }

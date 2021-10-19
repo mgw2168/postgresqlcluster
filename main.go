@@ -110,8 +110,11 @@ func main() {
 		AddFunc: func(obj interface{}) {
 			mObj := obj.(*sv1.StorageClass)
 			Pgo.UpdateCm(clintset, "pgo", mObj)
-
 			klog.Infof("New sc Added to Store: %s", mObj.Name)
+		},
+		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
+		},
+		DeleteFunc: func(obj interface{}) {
 		},
 	})
 	stopCh := make(chan struct{})
