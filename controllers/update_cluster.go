@@ -2,14 +2,16 @@ package controllers
 
 import (
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/models"
 	"github.com/kubesphere/models/cluster"
 	"github.com/kubesphere/models/user"
 	"k8s.io/klog/v2"
+	"reflect"
 )
 
 func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	// update pvc
-	if oldObj.Spec.PVCSize != newObj.Spec.PVCSize {
+	if oldObj.Spec.PVCSize != newObj.Spec.PVCSize && oldObj.Spec.PVCSize != ""{
 		err = cluster.UpdatePgCluster(newObj)
 		if err != nil {
 			klog.Errorf("update pvc error: %s", err)
@@ -33,14 +35,14 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	// scale down
-	if oldObj.Spec.ReplicaName != newObj.Spec.ReplicaName {
+	if oldObj.Spec.ReplicaName != newObj.Spec.ReplicaName && newObj.Spec.ReplicaName != "" {
 		err = cluster.ScaleDownPgCluster(newObj)
 		if err != nil {
 			klog.Errorf("scale down error: %s", err.Error())
 		}
 	}
 
-	// restart todo TODO
+	// restart
 	if oldObj.Spec.Restart {
 		err = cluster.RestartCluster(newObj)
 		if err != nil {
@@ -48,35 +50,42 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		}
 	}
 
-	// create user
-	//if oldObj.Spec.Username != newObj.Spec.Username || oldObj.Spec.Password != newObj.Spec.Password && newObj.Spec.Password != "" {
-	if len(newObj.Spec.Users) > 0 {
-		err = user.CreatePgUser(newObj)
-		if err != nil {
-			klog.Errorf("create pg user error: %s", err.Error())
+	if len(newObj.Spec.Users) > 0 && !reflect.DeepEqual(newObj.Spec.Users, oldObj.Spec.Users) {
+		// create user
+		for _, newUser := range newObj.Spec.Users {
+			if !models.InSlice(oldObj, newUser.UserName) {
+				err = user.CreatePgUser(newObj, newUser.UserName, newUser.Password)
+				if err != nil {
+					klog.Errorf("create user error: %s", err.Error())
+				}
+			}
+		}
+
+		// delete user
+		for _, oldUser := range oldObj.Spec.Users {
+			if !models.InSlice(newObj, oldUser.UserName) {
+				err = user.DeletePgUser(newObj, oldUser.UserName)
+				if err != nil {
+					klog.Errorf("delete user error: %s", err.Error())
+				}
+			}
+			// update user
+			for _, newUser := range newObj.Spec.Users {
+				if oldUser.UserName == newUser.UserName && oldUser.Password != newUser.Password {
+					err = user.UpdatePgUser(newObj, newUser.UserName, newUser.Password)
+					if err != nil {
+						klog.Errorf("update password error: %s", err.Error())
+					}
+				}
+			}
 		}
 	}
 
-	// delete user
-	if oldObj.Spec.Username != newObj.Spec.Username && newObj.Spec.Password == "" {
-		err = user.DeletePgUser(newObj)
-		if err != nil {
-			klog.Errorf("update password error: %s", err.Error())
-		}
-	}
-
-	// update user password
-	if oldObj.Spec.Username == newObj.Spec.Username && oldObj.Spec.Password != newObj.Spec.Password {
-		err = user.UpdatePgUser(newObj)
-		if err != nil {
-			klog.Errorf("update password error: %s", err.Error())
-		}
-	}
 	// list user
 	if oldObj.Spec.Username != newObj.Spec.Username && newObj.Spec.Password == "" {
 		err = user.ListPgUser(newObj)
 		if err != nil {
-			klog.Errorf("update password error: %s", err.Error())
+			klog.Errorf("list user error: %s", err.Error())
 		}
 	}
 	return nil

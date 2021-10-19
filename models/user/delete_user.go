@@ -7,7 +7,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func DeletePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
+func DeletePgUser(pg *v1alpha1.PostgreSQLCluster, username string) (err error) {
 	var resp pkg.DeleteUserResponse
 	var clusterName []string
 	clusterName = append(clusterName, pg.Spec.Name)
@@ -15,7 +15,7 @@ func DeletePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		ClientVersion: "4.7.1",
 		Clusters:      clusterName,
 		Namespace:     pg.Spec.Namespace,
-		Username:      pg.Spec.Username,
+		Username:      username,
 	}
 	respByte, err := pkg.Call("POST", pkg.DeleteUserPath, deleteUserReq)
 	if err != nil {
@@ -32,17 +32,6 @@ func DeletePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		pg.Status.State = v1alpha1.Failed
 	}
 
-	//res, ok := pg.Status.Condition[v1alpha1.DeleteUser]
-	//if ok {
-	//	res.Code = resp.Code
-	//	res.Msg = resp.Msg
-	//} else {
-	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
-	//		v1alpha1.DeleteUser: {
-	//			Code: resp.Code,
-	//			Msg:  resp.Msg,
-	//		}}
-	//}
 	flag := true
 	for _, res := range pg.Status.Condition {
 		if res.Api == v1alpha1.DeleteUser {

@@ -7,7 +7,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
+func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err error) {
 	var resp pkg.UpdateUserResponse
 	var clusterName []string
 	clusterName = append(clusterName, pg.Spec.Name)
@@ -15,8 +15,8 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		Clusters:                 clusterName,
 		ClientVersion:            "4.7.1",
 		Namespace:                pg.Spec.Namespace,
-		Username:                 pg.Spec.Username,
-		Password:                 pg.Spec.Password,
+		Username:                 username,
+		Password:                 passwd,
 		PasswordAgeDays:          86400,
 		PasswordLength:           8,
 		PasswordType:             "md5",

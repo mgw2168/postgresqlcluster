@@ -7,7 +7,7 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func CreatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
+func CreatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err error) {
 	var resp pkg.CreateUserResponse
 	var clusterName []string
 	clusterName = append(clusterName, pg.Spec.Name)
@@ -16,8 +16,8 @@ func CreatePgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		ClientVersion:   "4.7.1",
 		ManagedUser:     pg.Spec.ManagedUser,
 		Namespace:       pg.Spec.Namespace,
-		Username:        pg.Spec.Username,
-		Password:        pg.Spec.Password,
+		Username:        username,
+		Password:        passwd,
 		PasswordAgeDays: 86400,
 		PasswordLength:  8,
 		PasswordType:    "md5",

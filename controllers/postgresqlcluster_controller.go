@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/models/cluster"
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -97,10 +96,8 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Watch for changes to PostgreSQLCluster
 	err = c.Watch(&source.Kind{Type: &v1alpha1.PostgreSQLCluster{}}, &handler.Funcs{
 		CreateFunc: func(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
-			fmt.Println("//// create func...")
 			pg := event.Object.(*v1alpha1.PostgreSQLCluster)
 			if pg.Status.State == "" {
-				fmt.Println("=== do create ...")
 				if err := cluster.CreatePgCluster(pg); err != nil {
 					klog.Errorf("create Pgcluster resource error: %s", err)
 				}

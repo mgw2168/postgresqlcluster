@@ -34,17 +34,6 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		pg.Status.State = v1alpha1.Failed
 	}
 
-	//res, ok := pg.Status.Condition[v1alpha1.RestartCluster]
-	//if ok {
-	//	res.Code = resp.Code
-	//	res.Msg = resp.Msg
-	//} else {
-	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
-	//		v1alpha1.RestartCluster: {
-	//			Code: resp.Code,
-	//			Msg:  resp.Msg,
-	//		}}
-	//}
 	flag := true
 	for _, res := range pg.Status.Condition {
 		if res.Api == v1alpha1.RestartCluster {
