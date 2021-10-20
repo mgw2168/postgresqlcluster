@@ -22,6 +22,7 @@ spec:
 
   # restart
   rollingUpdate: true
+  restart: true
 #  podAnnotation:
 #    - podName: "test001-kmfy"
   # delete cluster

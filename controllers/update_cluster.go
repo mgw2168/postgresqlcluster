@@ -16,8 +16,8 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		if err != nil {
 			klog.Errorf("update pvc error: %s", err)
 		}
-		klog.Error("update pvc error===")
 	}
+
 	// update cpu and memory
 	if oldObj.Spec.CPURequest != newObj.Spec.CPURequest || oldObj.Spec.CPULimit != newObj.Spec.CPULimit ||
 		oldObj.Spec.MemoryLimit != newObj.Spec.MemoryLimit ||
@@ -26,8 +26,8 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		if err != nil {
 			klog.Errorf("update cpu and memory error: %s", err.Error())
 		}
-		klog.Error("update cpu and memory error")
 	}
+
 	// scale up
 	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount && newObj.Spec.ReplicaCount > oldObj.Spec.ReplicaCount {
 		err = cluster.ScaleUpPgCluster(newObj)

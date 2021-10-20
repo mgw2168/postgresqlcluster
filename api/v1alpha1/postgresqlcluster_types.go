@@ -129,6 +129,16 @@ type PostgreSQLClusterList struct {
 	Items           []PostgreSQLCluster `json:"items"`
 }
 
+type PgStorageSpec struct {
+	Name               string `json:"name"`
+	StorageClass       string `json:"storageclass"`
+	AccessMode         string `json:"accessmode"`
+	Size               string `json:"size"`
+	StorageType        string `json:"storagetype"`
+	SupplementalGroups string `json:"supplementalgroups"`
+	MatchLabels        string `json:"matchLabels"`
+}
+
 func init() {
 	SchemeBuilder.Register(&PostgreSQLCluster{}, &PostgreSQLClusterList{})
 }
