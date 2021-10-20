@@ -7,7 +7,11 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
+func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
+	var pvcSize string
+	if pvc {
+		pvcSize = pg.Spec.PVCSize
+	}
 	var resp pkg.UpdateClusterResponse
 	var clusterName []string
 	clusterName = append(clusterName, pg.Spec.Name)
@@ -20,7 +24,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		CPURequest:    pg.Spec.CPURequest,
 		MemoryLimit:   pg.Spec.MemoryLimit,
 		MemoryRequest: pg.Spec.MemoryRequest,
-		PVCSize:       pg.Spec.PVCSize,
+		PVCSize:       pvcSize,
 		Startup:       true,
 	}
 	respByte, err := pkg.Call("POST", pkg.UpdateClusterPath, updateReq)
