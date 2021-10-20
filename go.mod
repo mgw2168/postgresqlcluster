@@ -12,4 +12,5 @@ require (
 	k8s.io/code-generator v0.20.2
 	k8s.io/klog/v2 v2.4.0
 	sigs.k8s.io/controller-runtime v0.8.3
+	sigs.k8s.io/yaml v1.2.0
 )

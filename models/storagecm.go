@@ -5,14 +5,17 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
-	crv1 "github.com/kubesphere/api/v1alpha1"
 	log "github.com/sirupsen/logrus"
 	v1 "k8s.io/api/core/v1"
 	scv1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/util/retry"
 	"sigs.k8s.io/yaml"
 )
 
@@ -21,7 +24,7 @@ const (
 	PATH                = "pgo.yaml"
 )
 
-var StorageSpec crv1.PgStorageSpec
+// var StorageSpec crv1.PgStorageSpec
 
 type PgoConfig struct {
 	BasicAuth       string                   `json:"BasicAuth"`
@@ -114,6 +117,41 @@ func updateOperatorConfigMap(clientset kubernetes.Interface, namespace string, C
 
 	return clientset.CoreV1().ConfigMaps(namespace).Update(ctx, Cm, metav1.UpdateOptions{})
 }
+func DelPod(clientset kubernetes.Interface, namespace string, labels map[string]string) error {
+	ctx := context.TODO()
+	var options metav1.ListOptions
+	if labels != nil {
+		options.LabelSelector = fields.Set(labels).String()
+	}
+
+	retryErr := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		list, err := clientset.CoreV1().Pods(namespace).List(ctx, options)
+		if list == nil && err != nil {
+			list = &v1.PodList{}
+		}
+		for _, p := range list.Items {
+			err := clientset.CoreV1().Pods(namespace).Delete(ctx, p.Name, metav1.DeleteOptions{})
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+		return err
+	})
+	if retryErr != nil {
+		log.Fatal("Del failed: %v", retryErr)
+	}
+
+	return nil
+}
+func RestartPod(clientset kubernetes.Interface, namespace string) error {
+	ctx := context.TODO()
+	data := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"%s"}}}}}`, time.Now().String())
+	_, err := clientset.AppsV1().Deployments(namespace).Patch(ctx, "postgres-operator", types.StrategicMergePatchType, []byte(data), metav1.PatchOptions{FieldManager: "kubectl-rollout"})
+	if err != nil {
+		log.Error(err)
+	}
+	return nil
+}
 
 func (c *PgoConfig) GetStorageSpec(name string) (StorageStruct, error) {
 	var err error
@@ -152,8 +190,6 @@ func (c *PgoConfig) GenStorageSpec(name string, scClass string) (StorageStruct, 
 	storage.AccessMode = "ReadWriteOnce"
 	storage.Size = "1Gi"
 	storage.StorageType = "dynamic"
-	// storage.MatchLabels = s.MatchLabels
-	// storage.SupplementalGroups = s.SupplementalGroups
 
 	if storage.MatchLabels != "" {
 		test := strings.Split(storage.MatchLabels, "=")
@@ -205,25 +241,26 @@ func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, s
 		if k == scName {
 			break
 		}
-		log.Infof("Configd: %s  %s ", v.StorageClass, k)
+		log.Debug("Configd: %s  %s ", v.StorageClass, k)
 		n = n + 1
 		if n == len(c.Storage) {
 			newsc, err := c.GenStorageSpec(scName, scName)
-			fmt.Println(newsc)
 			if err != nil {
 				log.Errorf("AddStorageSpec: %v", err)
 			}
 			c.Storage[scName] = newsc
-			log.Infof("Config: %q x", scName)
+			log.Infof("Config Storage class: %q to Configmap pgo-config ", scName)
+			if err := RestartPod(clientset, namespace); err != nil {
+				log.Error(err)
+			}
 		}
 	}
 	//填充cm
 	cData, _ := yaml.Marshal(c)
 	cMap.Data[PATH] = string(cData)
 	cM, err := updateOperatorConfigMap(clientset, namespace, cMap)
-	fmt.Println(string(cData))
 	if err != nil {
 		log.Error("Config: %v x", err)
 	}
-	return cM, nil
+	return cM, err
 }

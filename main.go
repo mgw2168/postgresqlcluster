@@ -76,6 +76,9 @@ func main() {
 
 	kubeconfig := ctrl.GetConfigOrDie()
 	mgr, err := manager.New(kubeconfig, manager.Options{Scheme: scheme})
+	if err != nil {
+		klog.Error(err)
+	}
 
 	err = controllers.Add(mgr)
 	if err != nil {
@@ -110,7 +113,7 @@ func main() {
 		AddFunc: func(obj interface{}) {
 			mObj := obj.(*sv1.StorageClass)
 			Pgo.UpdateCm(clintset, "pgo", mObj)
-			klog.Infof("New sc Added to Store: %s", mObj.Name)
+			klog.Infof("New StorageClass Added to Store: %s", mObj.Name)
 		},
 		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
 		},
@@ -126,13 +129,6 @@ func main() {
 		setupLog.Error(err, "unable to set up sc informer")
 		os.Exit(1)
 	}
-	// scNames, err := informerScLister.List(labels.Everything())
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// for idx, sc := range scNames {
-	// 	klog.Info("%d -> %s\n", idx+1, sc.GenerateName)
-	// }
 
 	//+kubebuilder:scaffold:builder
 
