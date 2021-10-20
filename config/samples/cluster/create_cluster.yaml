@@ -20,6 +20,7 @@ spec:
   password: "pass1"
   # restart
   rollingUpdate: true
+  restart: true
 #  podAnnotation:
 #    - podName: "test001-kmfy"
   # delete cluster
