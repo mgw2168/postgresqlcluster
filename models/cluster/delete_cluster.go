@@ -33,11 +33,11 @@ func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	flag := true
-	for _, res := range pg.Status.Condition {
-		if res.Api == v1alpha1.DeleteCluster {
+	for i, _ := range pg.Status.Condition {
+		if pg.Status.Condition[i].Api == v1alpha1.DeleteCluster {
 			flag = false
-			res.Code = resp.Code
-			res.Msg = resp.Msg
+			pg.Status.Condition[i].Code = resp.Code
+			pg.Status.Condition[i].Msg = resp.Msg
 			break
 		}
 	}
@@ -46,7 +46,6 @@ func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 			Api:  v1alpha1.DeleteCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
-			Data: "",
 		})
 	}
 	return

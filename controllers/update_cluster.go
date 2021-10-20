@@ -11,7 +11,7 @@ import (
 
 func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	// update pvc
-	if oldObj.Spec.PVCSize != newObj.Spec.PVCSize && oldObj.Spec.PVCSize != ""{
+	if oldObj.Spec.PVCSize != newObj.Spec.PVCSize && oldObj.Spec.PVCSize != "" {
 		err = cluster.UpdatePgCluster(newObj)
 		if err != nil {
 			klog.Errorf("update pvc error: %s", err)

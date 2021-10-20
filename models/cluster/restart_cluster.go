@@ -35,11 +35,12 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	flag := true
-	for _, res := range pg.Status.Condition {
-		if res.Api == v1alpha1.RestartCluster {
+	for i, _ := range pg.Status.Condition {
+		if pg.Status.Condition[i].Api == v1alpha1.RestartCluster {
 			flag = false
-			res.Code = resp.Code
-			res.Msg = resp.Msg
+			pg.Status.Condition[i].Code = resp.Code
+			pg.Status.Condition[i].Msg = resp.Msg
+			pg.Status.Condition[i].Data = resp.Result.ErrorMessage
 			break
 		}
 	}
@@ -48,7 +49,7 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 			Api:  v1alpha1.RestartCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
-			Data: "",
+			Data: resp.Result.ErrorMessage,
 		})
 	}
 	pg.Spec.Restart = false

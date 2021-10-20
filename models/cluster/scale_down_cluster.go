@@ -32,23 +32,13 @@ func ScaleDownPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	} else {
 		pg.Status.State = v1alpha1.Failed
 	}
-	//res, ok := pg.Status.Condition[v1alpha1.ScaleDownCluster]
-	//if ok {
-	//	res.Code = resp.Code
-	//	res.Msg = resp.Msg
-	//} else {
-	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
-	//		v1alpha1.ScaleDownCluster: {
-	//			Code: resp.Code,
-	//			Msg:  resp.Msg,
-	//		}}
-	//}
+
 	flag := true
-	for _, res := range pg.Status.Condition {
-		if res.Api == v1alpha1.ScaleDownCluster {
+	for i, _ := range pg.Status.Condition {
+		if pg.Status.Condition[i].Api == v1alpha1.ScaleDownCluster {
 			flag = false
-			res.Code = resp.Code
-			res.Msg = resp.Msg
+			pg.Status.Condition[i].Code = resp.Code
+			pg.Status.Condition[i].Msg = resp.Msg
 			break
 		}
 	}
@@ -57,7 +47,6 @@ func ScaleDownPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 			Api:  v1alpha1.ScaleDownCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
-			Data: "",
 		})
 	}
 	return

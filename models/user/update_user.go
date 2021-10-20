@@ -37,23 +37,12 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		pg.Status.State = v1alpha1.Failed
 	}
 
-	//res, ok := pg.Status.Condition[v1alpha1.UpdateUser]
-	//if ok {
-	//	res.Code = resp.Code
-	//	res.Msg = resp.Msg
-	//} else {
-	//	pg.Status.Condition = map[string]v1alpha1.ApiResult{
-	//		v1alpha1.UpdateUser: {
-	//			Code: resp.Code,
-	//			Msg:  resp.Msg,
-	//		}}
-	//}
 	flag := true
-	for _, res := range pg.Status.Condition {
-		if res.Api == v1alpha1.UpdateUser {
+	for i, _ := range pg.Status.Condition {
+		if pg.Status.Condition[i].Api == v1alpha1.UpdateUser {
 			flag = false
-			res.Code = resp.Code
-			res.Msg = resp.Msg
+			pg.Status.Condition[i].Code = resp.Code
+			pg.Status.Condition[i].Msg = resp.Msg
 			break
 		}
 	}
@@ -62,7 +51,6 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 			Api:  v1alpha1.UpdateUser,
 			Code: resp.Code,
 			Msg:  resp.Msg,
-			Data: "",
 		})
 	}
 	return
