@@ -7,8 +7,8 @@ const (
 	// port of the postgresql operator api server
 	srvPort = "8443"
 	// IP svcname.namespace
-	IP = "http://139.198.21.143"
-	//IP = "http://postgres-operator.pgo"
+	//IP = "http://139.198.21.143"
+	IP = "http://postgres-operator.pgo"
 	// Cluster path
 	HostPath           = IP + ":" + srvPort
 	CreateClusterPath  = HostPath + "/clusters"

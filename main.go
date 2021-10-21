@@ -79,9 +79,11 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d61cefd2.kubesphere.io",
 	})
-	mgr, err = manager.New(ctrl.GetConfigOrDie(), manager.Options{Scheme: scheme})
+
+	err = controllers.Add(mgr)
 	if err != nil {
-		klog.Error(err)
+		setupLog.Error(err, "add controller error")
+		os.Exit(1)
 	}
 
 	if err = (&controllers.PostgreSQLClusterReconciler{
