@@ -29,14 +29,14 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 	if resp.Code == pkg.Ok {
 		// update cluster status
-		pg.Status.State = v1alpha1.Success
+		pg.Status.State = pkg.Success
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.State = pkg.Failed
 	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == v1alpha1.RestartCluster {
+		if pg.Status.Condition[i].Api == pkg.RestartCluster {
 			flag = false
 			pg.Status.Condition[i].Code = resp.Code
 			pg.Status.Condition[i].Msg = resp.Msg
@@ -46,7 +46,7 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 	if flag {
 		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  v1alpha1.RestartCluster,
+			Api:  pkg.RestartCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
 			Data: resp.Result.ErrorMessage,

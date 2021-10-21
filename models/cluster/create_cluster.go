@@ -37,14 +37,14 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		return
 	}
 	if resp.Code == pkg.Ok {
-		pg.Status.State = v1alpha1.Success
+		pg.Status.State = pkg.Success
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.State = pkg.Failed
 	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == v1alpha1.CreateCluster {
+		if pg.Status.Condition[i].Api == pkg.CreateCluster {
 			flag = false
 			pg.Status.Condition[i].Code = resp.Code
 			pg.Status.Condition[i].Msg = resp.Msg
@@ -53,7 +53,7 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 	if flag {
 		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  v1alpha1.CreateCluster,
+			Api:  pkg.CreateCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
 		})
