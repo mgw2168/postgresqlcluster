@@ -106,6 +106,7 @@ type PgStorageSpec struct {
 	MatchLabels        string `json:"matchLabels"`
 }
 
+//+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 func getOperatorConfigMap(clientset kubernetes.Interface, namespace string) (*v1.ConfigMap, error) {
 	ctx := context.TODO()
 
@@ -138,7 +139,7 @@ func DelPod(clientset kubernetes.Interface, namespace string, labels map[string]
 		return err
 	})
 	if retryErr != nil {
-		log.Fatal("Del failed: %v", retryErr)
+		log.Fatal(retryErr)
 	}
 
 	return nil
@@ -148,7 +149,7 @@ func RestartPod(clientset kubernetes.Interface, namespace string) error {
 	data := fmt.Sprintf(`{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"%s"}}}}}`, time.Now().String())
 	_, err := clientset.AppsV1().Deployments(namespace).Patch(ctx, "postgres-operator", types.StrategicMergePatchType, []byte(data), metav1.PatchOptions{FieldManager: "kubectl-rollout"})
 	if err != nil {
-		log.Error(err)
+		return err
 	}
 	return nil
 }
@@ -160,7 +161,6 @@ func (c *PgoConfig) GetStorageSpec(name string) (StorageStruct, error) {
 	s, ok := c.Storage[name]
 	if !ok {
 		err = errors.New("invalid Storage name " + name)
-		log.Error(err)
 		return storage, err
 	}
 
@@ -175,7 +175,6 @@ func (c *PgoConfig) GetStorageSpec(name string) (StorageStruct, error) {
 		test := strings.Split(storage.MatchLabels, "=")
 		if len(test) != 2 {
 			err = errors.New("invalid Storage config " + name + " MatchLabels needs to be in key=value format.")
-			log.Error(err)
 			return storage, err
 		}
 	}
@@ -206,13 +205,13 @@ func (c *PgoConfig) GenStorageSpec(name string, scClass string) (StorageStruct, 
 func (c *PgoConfig) GetConfig(clientset kubernetes.Interface, namespace string) (*PgoConfig, error) {
 	cMap, err := getOperatorConfigMap(clientset, namespace)
 	if err != nil {
-		log.Errorf("could not get ConfigMap: %s", err.Error())
+		log.Error(err)
 		return nil, err
 	}
 	str := cMap.Data[PATH]
 	yamlFile := []byte(str)
 	if err := yaml.Unmarshal(yamlFile, c); err != nil {
-		log.Errorf("Unmarshal: %v", err)
+		log.Error(err)
 		return nil, err
 	}
 	return c, err
@@ -221,14 +220,14 @@ func (c *PgoConfig) GetConfig(clientset kubernetes.Interface, namespace string) 
 func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, sc *scv1.StorageClass) (*v1.ConfigMap, error) {
 	cMap, err := getOperatorConfigMap(clientset, namespace)
 	if err != nil {
-		log.Errorf("could not get ConfigMap: %s", err.Error())
+		log.Error(err)
 		return nil, err
 	}
 	scName := sc.Name
 	str := cMap.Data[PATH]
 	scyamlFile := []byte(str)
 	if err := yaml.Unmarshal(scyamlFile, c); err != nil {
-		log.Errorf("Unmarshal: %v", err)
+		log.Error(err)
 		return nil, err
 	}
 
@@ -241,7 +240,7 @@ func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, s
 		if k == scName {
 			break
 		}
-		log.Debug("Configd: %s  %s ", v.StorageClass, k)
+		log.Debugf("Configd: %s  %s ", v.StorageClass, k)
 		n = n + 1
 		if n == len(c.Storage) {
 			newsc, err := c.GenStorageSpec(scName, scName)
@@ -260,7 +259,7 @@ func (c *PgoConfig) UpdateCm(clientset kubernetes.Interface, namespace string, s
 	cMap.Data[PATH] = string(cData)
 	cM, err := updateOperatorConfigMap(clientset, namespace, cMap)
 	if err != nil {
-		log.Error("Config: %v x", err)
+		log.Errorf("Config: %v x", err.Error())
 	}
 	return cM, err
 }
