@@ -19,7 +19,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 		Clustername:   clusterName,
 		ClientVersion: "4.7.1",
 		Namespace:     pg.Spec.Namespace,
-		Autofail:      0,
+		Autofail:      1,
 		CPULimit:      pg.Spec.CPULimit,
 		CPURequest:    pg.Spec.CPURequest,
 		MemoryLimit:   pg.Spec.MemoryLimit,
@@ -37,14 +37,14 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 		return
 	}
 	if resp.Code == pkg.Ok {
-		pg.Status.State = v1alpha1.Success
+		pg.Status.State = pkg.Success
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.State = pkg.Failed
 	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == v1alpha1.UpdateCluster {
+		if pg.Status.Condition[i].Api == pkg.UpdateCluster {
 			flag = false
 			pg.Status.Condition[i].Code = resp.Code
 			pg.Status.Condition[i].Msg = resp.Msg
@@ -53,7 +53,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 	}
 	if flag {
 		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  v1alpha1.UpdateCluster,
+			Api:  pkg.UpdateCluster,
 			Code: resp.Code,
 			Msg:  resp.Msg,
 		})

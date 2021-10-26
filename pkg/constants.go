@@ -6,7 +6,7 @@ const (
 	PassWord = "examplepassword"
 	// port of the postgresql operator api server
 	srvPort = "8443"
-	// IP svcname.namespace
+	// IP svc name.namespace
 	//IP = "http://139.198.21.143"
 	IP = "http://postgres-operator.pgo"
 	// Cluster path
@@ -27,9 +27,21 @@ const (
 	UpdateUserPath = HostPath + "/userupdate"
 	ShowUserPath   = HostPath + "/usershow"
 
-	// Ok status
-	Ok = "ok"
+	// status
+	Ok      = "ok"
+	Error   = "error"
+	Failed  = "failed"
+	Success = "success"
 
-	// Error code string
-	Error = "error"
+	// action of the cluster or user
+	CreateCluster    = "create_cluster"
+	DeleteCluster    = "delete_cluster"
+	UpdateCluster    = "update_cluster"
+	ScaleCluster     = "scale_cluster"
+	ScaleDownCluster = "scaledown_cluster"
+	RestartCluster   = "restart_cluster"
+	CreateUser       = "create_user"
+	DeleteUser       = "delete_user"
+	UpdateUser       = "update_user"
+	ShowUser         = "show_user"
 )

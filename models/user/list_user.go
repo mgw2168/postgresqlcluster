@@ -27,14 +27,14 @@ func ListPgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		return
 	}
 	if resp.Code == pkg.Ok {
-		pg.Status.State = v1alpha1.Success
+		pg.Status.State = pkg.Success
 	} else {
-		pg.Status.State = v1alpha1.Failed
+		pg.Status.State = pkg.Failed
 	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == v1alpha1.ShowUser {
+		if pg.Status.Condition[i].Api == pkg.ShowUser {
 			flag = false
 			pg.Status.Condition[i].Code = resp.Code
 			pg.Status.Condition[i].Msg = resp.Msg
@@ -43,7 +43,7 @@ func ListPgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 	if flag {
 		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  v1alpha1.ShowUser,
+			Api:  pkg.ShowUser,
 			Code: resp.Code,
 			Msg:  resp.Msg,
 		})

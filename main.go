@@ -95,22 +95,22 @@ func main() {
 	}
 	//storageclass逻辑
 	// create a client for kube resources
-	clintset, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
+	clientset, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
 	if err != nil {
 		os.Exit(1)
 	}
-	sharedInformers := informers.NewSharedInformerFactory(clintset, time.Minute)
+	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
 	class := sharedInformers.Storage().V1().StorageClasses()
 	informerSc := class.Informer()
 	// informerScLister := class.Lister()
 	var Pgo models.PgoConfig
-	if _, err := Pgo.GetConfig(clintset, "pgo"); err != nil {
+	if _, err := Pgo.GetConfig(clientset, "pgo"); err != nil {
 		klog.Error(err)
 	}
 	informerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			mObj := obj.(*sv1.StorageClass)
-			_, err := Pgo.UpdateCm(clintset, "pgo", mObj)
+			_, err := Pgo.UpdateCm(clientset, "pgo", mObj)
 			if err != nil {
 				klog.Errorf("update configmap error: %s", err)
 			}
