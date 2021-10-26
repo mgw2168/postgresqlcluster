@@ -28,8 +28,8 @@ const (
 	ShowUserPath   = HostPath + "/usershow"
 
 	// status
-	Ok = "ok"
-	Error = "error"
+	Ok      = "ok"
+	Error   = "error"
 	Failed  = "failed"
 	Success = "success"
 

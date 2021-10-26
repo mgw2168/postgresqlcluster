@@ -19,7 +19,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 		Clustername:   clusterName,
 		ClientVersion: "4.7.1",
 		Namespace:     pg.Spec.Namespace,
-		Autofail:      0,
+		Autofail:      1,
 		CPULimit:      pg.Spec.CPULimit,
 		CPURequest:    pg.Spec.CPURequest,
 		MemoryLimit:   pg.Spec.MemoryLimit,
