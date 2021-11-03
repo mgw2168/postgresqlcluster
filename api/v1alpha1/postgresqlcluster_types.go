@@ -35,6 +35,7 @@ type PostgreSQLClusterSpec struct {
 	SyncReplication *bool  `json:"syncReplication,omitempty"`
 	CCPImage        string `json:"ccpImage,omitempty"`
 	CCPImageTag     string `json:"ccpImageTag,omitempty"`
+	PgVersion       string `json:"pgVersion,omitempty"`
 	ReplicaCount    int    `json:"replicaCount,omitempty"`
 	CPULimit        string `json:"cpuLimit,omitempty"`
 	CPURequest      string `json:"cpuRequest,omitempty"`

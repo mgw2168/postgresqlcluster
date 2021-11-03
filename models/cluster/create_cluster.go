@@ -9,12 +9,18 @@ import (
 
 func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.CreateClusterResponse
+	if pg.Spec.PgVersion == "12" {
+		pg.Spec.CCPImageTag = "centos8-12.7-3.0-4.7.1"
+	} else if pg.Spec.PgVersion == "13" {
+		pg.Spec.CCPImageTag = "centos8-13.3-3.0-4.7.1"
+	}
 	clusterReq := &pkg.CreatePgCluster{
 		ClientVersion:   "4.7.1",
 		Name:            pg.Spec.Name,
 		Namespace:       pg.Spec.Namespace,
 		SyncReplication: pg.Spec.SyncReplication,
-		CCPImage:        pg.Spec.CCPImage,
+		CCPImage:        "radondb-postgres-gis-ha",
+		CCPImagePrefix:  "docker.io/radondb",
 		CCPImageTag:     pg.Spec.CCPImageTag,
 		ReplicaCount:    pg.Spec.ReplicaCount,
 		CPULimit:        pg.Spec.CPULimit,
@@ -26,6 +32,7 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		Password:        pg.Spec.Password,
 		StorageConfig:   pg.Spec.StorageConfig,
 		PVCSize:         pg.Spec.PVCSize,
+		AutofailFlag:    true,
 	}
 	respByte, err := pkg.Call("POST", pkg.CreateClusterPath, clusterReq)
 	if err != nil {

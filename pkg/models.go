@@ -17,6 +17,7 @@ type CreatePgCluster struct {
 	SyncReplication *bool
 	CCPImage        string
 	CCPImageTag     string
+	CCPImagePrefix  string
 	ReplicaCount    int
 	CPULimit        string
 	CPURequest      string
@@ -27,6 +28,7 @@ type CreatePgCluster struct {
 	Password        string
 	StorageConfig   string
 	PVCSize         string
+	AutofailFlag    bool
 }
 
 type CreateClusterResponse struct {
