@@ -7,16 +7,17 @@ import (
 	"k8s.io/klog/v2"
 )
 
-func ScaleUpPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
+func ScaleUpPgCluster(pg *v1alpha1.PostgreSQLCluster, replicaCount int) (err error) {
 	var resp pkg.ClusterScaleResponse
 	scaleReq := &pkg.ClusterScaleRequest{
 		Name:          pg.Spec.Name,
 		ClientVersion: "4.7.1",
 		Namespace:     pg.Spec.Namespace,
 		CCPImageTag:   pg.Spec.CCPImageTag,
-		ReplicaCount:  pg.Spec.ReplicaCount,
+		ReplicaCount:  replicaCount,
 		StorageConfig: pg.Spec.StorageConfig,
 	}
+	klog.Infof("params: %+v", scaleReq)
 	respByte, err := pkg.Call("POST", pkg.ScaleClusterPath+pg.Spec.Name, scaleReq)
 	if err != nil {
 		klog.Errorf("call scale cluster error: ", err.Error())

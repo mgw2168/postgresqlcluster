@@ -16,6 +16,7 @@ func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		DeleteBackups: false,
 		DeleteData:    false,
 	}
+	klog.Infof("params: %+v", clusterReq)
 	respByte, err := pkg.Call("POST", pkg.DeleteClusterPath, clusterReq)
 	if err != nil {
 		klog.Errorf("call delete cluster error: %s", err.Error())

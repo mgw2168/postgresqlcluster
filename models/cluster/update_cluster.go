@@ -27,6 +27,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 		PVCSize:       pvcSize,
 		Startup:       true,
 	}
+	klog.Infof("params: %+v", updateReq)
 	respByte, err := pkg.Call("POST", pkg.UpdateClusterPath, updateReq)
 	if err != nil {
 		klog.Errorf("call update cluster error: %s", err.Error())

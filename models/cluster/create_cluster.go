@@ -34,6 +34,7 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		PVCSize:         pg.Spec.PVCSize,
 		AutofailFlag:    true,
 	}
+	klog.Infof("params: %+v", clusterReq)
 	respByte, err := pkg.Call("POST", pkg.CreateClusterPath, clusterReq)
 	if err != nil {
 		klog.Errorf("call create cluster error: %s", err.Error())

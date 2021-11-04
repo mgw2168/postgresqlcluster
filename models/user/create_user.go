@@ -22,6 +22,7 @@ func CreatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		PasswordLength:  8,
 		PasswordType:    "md5",
 	}
+	klog.Infof("params: %+v", createUserReq)
 	respByte, err := pkg.Call("POST", pkg.CreateUserPath, createUserReq)
 	if err != nil {
 		klog.Errorf("call create user error: %s", err.Error())

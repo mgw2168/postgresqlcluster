@@ -17,6 +17,7 @@ func DeletePgUser(pg *v1alpha1.PostgreSQLCluster, username string) (err error) {
 		Namespace:     pg.Spec.Namespace,
 		Username:      username,
 	}
+	klog.Infof("params: %+v", deleteUserReq)
 	respByte, err := pkg.Call("POST", pkg.DeleteUserPath, deleteUserReq)
 	if err != nil {
 		klog.Errorf("call delete user error: %s", err.Error())

@@ -22,6 +22,7 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		PasswordType:             "md5",
 		SetSystemAccountPassword: pg.Spec.SetSystemAccountPassword,
 	}
+	klog.Infof("params: %+v", updateUserReq)
 	respByte, err := pkg.Call("POST", pkg.UpdateUserPath, updateUserReq)
 	if err != nil {
 		klog.Errorf("call update user error: %s", err.Error())

@@ -30,7 +30,8 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 
 	// scale up
 	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount && newObj.Spec.ReplicaCount > oldObj.Spec.ReplicaCount {
-		err = cluster.ScaleUpPgCluster(newObj)
+		replicaCount := newObj.Spec.ReplicaCount - oldObj.Spec.ReplicaCount
+		err = cluster.ScaleUpPgCluster(newObj, replicaCount)
 		if err != nil {
 			klog.Errorf("scale up error: %s", err.Error())
 		}
