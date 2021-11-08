@@ -17,6 +17,7 @@ func ListPgUser(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		Namespace:          pg.Spec.Namespace,
 		ShowSystemAccounts: pg.Spec.ShowSystemAccounts,
 	}
+	klog.Infof("params: %+v", listUserReq)
 	respByte, err := pkg.Call("POST", pkg.ShowUserPath, listUserReq)
 	if err != nil {
 		klog.Errorf("call list user error: %s", err.Error())

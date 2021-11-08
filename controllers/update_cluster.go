@@ -30,7 +30,8 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 
 	// scale up
 	if oldObj.Spec.ReplicaCount != newObj.Spec.ReplicaCount && newObj.Spec.ReplicaCount > oldObj.Spec.ReplicaCount {
-		err = cluster.ScaleUpPgCluster(newObj)
+		replicaCount := newObj.Spec.ReplicaCount - oldObj.Spec.ReplicaCount
+		err = cluster.ScaleUpPgCluster(newObj, replicaCount)
 		if err != nil {
 			klog.Errorf("scale up error: %s", err.Error())
 		}
@@ -55,6 +56,9 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 	if len(newObj.Spec.Users) > 0 && !reflect.DeepEqual(newObj.Spec.Users, oldObj.Spec.Users) {
 		// create user
 		for _, newUser := range newObj.Spec.Users {
+			if newUser.UserName == "postgres" {
+				continue
+			}
 			if !models.InSlice(oldObj, newUser.UserName) {
 				err = user.CreatePgUser(newObj, newUser.UserName, newUser.Password)
 				if err != nil {
@@ -65,6 +69,9 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 
 		// delete user
 		for _, oldUser := range oldObj.Spec.Users {
+			if oldUser.UserName == "postgres" {
+				continue
+			}
 			if !models.InSlice(newObj, oldUser.UserName) {
 				err = user.DeletePgUser(newObj, oldUser.UserName)
 				if err != nil {
@@ -73,6 +80,9 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 			}
 			// update user
 			for _, newUser := range newObj.Spec.Users {
+				if newUser.UserName == "postgres" {
+					continue
+				}
 				if oldUser.UserName == newUser.UserName && oldUser.Password != newUser.Password {
 					err = user.UpdatePgUser(newObj, newUser.UserName, newUser.Password)
 					if err != nil {

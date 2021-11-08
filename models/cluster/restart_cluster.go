@@ -17,6 +17,7 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		Targets:       pg.Spec.Targets,
 		ClientVersion: "4.7.1",
 	}
+	klog.Infof("params: %+v", restartReq)
 	respByte, err := pkg.Call("POST", pkg.RestartClusterPath, restartReq)
 	if err != nil {
 		klog.Errorf("call restart cluster error: %s", err.Error())

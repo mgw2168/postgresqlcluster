@@ -35,6 +35,7 @@ type PostgreSQLClusterSpec struct {
 	SyncReplication *bool  `json:"syncReplication,omitempty"`
 	CCPImage        string `json:"ccpImage,omitempty"`
 	CCPImageTag     string `json:"ccpImageTag,omitempty"`
+	PgVersion       string `json:"pgVersion,omitempty"`
 	ReplicaCount    int    `json:"replicaCount,omitempty"`
 	CPULimit        string `json:"cpuLimit,omitempty"`
 	CPURequest      string `json:"cpuRequest,omitempty"`
@@ -112,6 +113,7 @@ type ApiResult struct {
 //+kubebuilder:subresource:status
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apps,namespace=pgo,resources=deployments,verbs=get;list;watch;patch
+//+kubebuilder:rbac:groups=core,namespace=pgo,resources=configmaps,verbs=get;list;watch;patch
 
 // PostgreSQLCluster is the Schema for the postgresqlclusters API
 type PostgreSQLCluster struct {
