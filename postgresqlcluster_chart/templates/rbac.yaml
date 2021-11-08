@@ -3,7 +3,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: postgresqlcluster-manager-role
-  namespace: pgo
+  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
       - apps
@@ -54,7 +54,7 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   name: postgresqlcluster-manager-rolebinding
-  namespace: pgo
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -62,7 +62,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ .Values.serviceAccount.name }}
-    namespace: pgo
+    namespace: {{ .Release.Namespace }}
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -106,5 +106,5 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: {{ .Values.serviceAccount.name }}
-    namespace: pgo
+    namespace: {{ .Release.Namespace }}
   {{- end }}
