@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: postgresqlcluster-controller-manager
-  namespace: pgo
+  namespace: {{ .Release.Namespace }}
   labels:
     control-plane: controller-manager
 spec:
