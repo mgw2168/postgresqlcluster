@@ -6,6 +6,16 @@ metadata:
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
+      - pgcluster.kubesphere.io
+    resources:
+      - postgresqlclusters/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - watch
+  - apiGroups:
       - apps
     resources:
       - deployments
