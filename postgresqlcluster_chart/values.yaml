@@ -9,6 +9,11 @@ manager:
   pullPolicy: IfNotPresent
   tag: "v0.3"
 
+rbacProxy:
+  image: gcr.io/kubebuilder/kube-rbac-proxy
+  pullPolicy: IfNotPresent
+  tag: "v0.8.0"
+
 imagePullSecrets: []
 nameOverride: ""
 fullnameOverride: ""
