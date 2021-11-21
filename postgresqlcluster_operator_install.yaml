@@ -302,7 +302,7 @@ rules:
   - apiGroups:
       - pgcluster.kubesphere.io
     resources:
-      - postgresqlclusters/status
+      - postgresqlclusters
     verbs:
       - get
       - list
