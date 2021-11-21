@@ -300,6 +300,17 @@ metadata:
   namespace: pgo
 rules:
   - apiGroups:
+      - pgcluster.kubesphere.io
+    resources:
+      - postgresqlclusters/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - create
+      - watch
+  - apiGroups:
       - apps
     resources:
       - deployments
