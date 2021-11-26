@@ -119,7 +119,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 					if errors.IsConflict(err) {
 						return
 					}
-					klog.Errorf("update Pgcluster status error: %s", err)
+					klog.Errorf("update PostgreSQLCluster state error: %s", err)
 				}
 			}
 		},
@@ -128,20 +128,19 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			oldCluster := updateEvent.ObjectOld.(*v1alpha1.PostgreSQLCluster)
 			newCluster := updateEvent.ObjectNew.(*v1alpha1.PostgreSQLCluster)
 
-			err := doUpdateCluster(oldCluster, newCluster)
+			err = doUpdateCluster(oldCluster, newCluster)
 			if err != nil {
 				klog.Errorf("update cluster error: %s", err)
 			}
 			newCluster = updateState(mgr, newCluster)
 			err = reconcileObj.Status().Update(context.TODO(), newCluster)
 			if err != nil {
-
-				klog.Errorf("update Pgcluster status error: %s", err)
+				klog.Errorf("update PostgreSQLCluster state error: %s", err)
 			}
 		},
 		DeleteFunc: func(deleteEvent event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
 			pg := deleteEvent.Object.(*v1alpha1.PostgreSQLCluster)
-			err := cluster.DeletePgCluster(pg)
+			err = cluster.DeletePgCluster(pg)
 			if err != nil {
 				klog.Errorf("delete cluster error: %s", err)
 			}

@@ -7,7 +7,7 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - pgcluster.kubesphere.io
+  - pgcluster.radondb.com
   resources:
   - postgresqlclusters
   verbs:
@@ -19,13 +19,13 @@ rules:
   - update
   - watch
 - apiGroups:
-  - pgcluster.kubesphere.io
+  - pgcluster.radondb.com
   resources:
   - postgresqlclusters/finalizers
   verbs:
   - update
 - apiGroups:
-  - pgcluster.kubesphere.io
+  - pgcluster.radondb.com
   resources:
   - postgresqlclusters/status
   verbs:
