@@ -44,11 +44,6 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
 		return
 	}
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {

@@ -27,12 +27,6 @@ func ScaleDownPgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		return
 	}
 
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
-
 	flag := true
 	for i, _ := range pg.Status.Condition {
 		if pg.Status.Condition[i].Api == pkg.ScaleDownCluster {

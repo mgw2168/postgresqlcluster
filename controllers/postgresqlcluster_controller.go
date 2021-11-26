@@ -18,10 +18,12 @@ package controllers
 
 import (
 	"context"
+	v1 "github.com/kubesphere/api/v1"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/models/cluster"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,6 +35,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
+	"time"
 )
 
 type PostgreSQLClusterResource struct {
@@ -46,26 +49,35 @@ type PostgreSQLClusterReconciler struct {
 	Scheme *runtime.Scheme
 }
 
-//+kubebuilder:rbac:groups=pgcluster.kubesphere.io,resources=postgresqlclusters,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=pgcluster.kubesphere.io,resources=postgresqlclusters/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=pgcluster.kubesphere.io,resources=postgresqlclusters/finalizers,verbs=update
+var (
+	checkTime = 20 * time.Second
+)
 
-// Reconcile is part of the main kubernetes reconciliation loop which aims to
-// move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the PostgreSQLCluster object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.8.3/pkg/reconcile
+//+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters/status,verbs=get;update;patch
+//+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters/finalizers,verbs=update
+
 func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	pgCluster := &v1alpha1.PostgreSQLCluster{}
 	if err := r.Get(ctx, req.NamespacedName, pgCluster); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	return ctrl.Result{}, nil
+	pgc := &v1.Pgcluster{}
+	err := r.Get(ctx, types.NamespacedName{
+		Namespace: pgCluster.Namespace,
+		Name:      pgCluster.Name,
+	}, pgc)
+	if err != nil {
+		klog.Errorf("get pgcluster resource error: %s", err)
+		return ctrl.Result{RequeueAfter: checkTime}, client.IgnoreNotFound(err)
+	}
+
+	if string(pgc.Status.State) != "" {
+		pgCluster.Status.State = string(pgc.Status.State)
+	}
+	err = r.Status().Update(ctx, pgCluster)
+	return ctrl.Result{RequeueAfter: checkTime}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -98,9 +110,10 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 		CreateFunc: func(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
 			pg := event.Object.(*v1alpha1.PostgreSQLCluster)
 			if pg.Status.State == "" {
-				if err := cluster.CreatePgCluster(pg); err != nil {
+				if err = cluster.CreatePgCluster(pg); err != nil {
 					klog.Errorf("create Pgcluster resource error: %s", err)
 				}
+				pg = updateState(mgr, pg)
 				err = reconcileObj.Status().Update(context.TODO(), pg)
 				if err != nil {
 					if errors.IsConflict(err) {
@@ -119,7 +132,7 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if err != nil {
 				klog.Errorf("update cluster error: %s", err)
 			}
-
+			newCluster = updateState(mgr, newCluster)
 			err = reconcileObj.Status().Update(context.TODO(), newCluster)
 			if err != nil {
 
@@ -132,12 +145,28 @@ func add(mgr manager.Manager, r reconcile.Reconciler) error {
 			if err != nil {
 				klog.Errorf("delete cluster error: %s", err)
 			}
+			//pg = updateState(mgr, pg)
 		},
 	})
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func updateState(mgr manager.Manager, pg *v1alpha1.PostgreSQLCluster) *v1alpha1.PostgreSQLCluster {
+	pgc := &v1.Pgcluster{}
+	err := mgr.GetClient().Get(context.TODO(), types.NamespacedName{
+		Namespace: pg.Namespace,
+		Name:      pg.Name,
+	}, pgc)
+	if err != nil {
+		klog.Errorf("get pgcluster resource error: %s", err)
+	}
+	if string(pgc.Status.State) != "" {
+		pg.Status.State = string(pgc.Status.State)
+	}
+	return pg
 }
 
 func newReconciler(mgr manager.Manager) reconcile.Reconciler {

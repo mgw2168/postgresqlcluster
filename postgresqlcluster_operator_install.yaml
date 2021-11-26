@@ -247,7 +247,7 @@ spec:
             - "--health-probe-bind-address=:8081"
             - "--metrics-bind-address=127.0.0.1:8080"
             - "--leader-elect"
-          image: mgw2168/postgresqlcluster:v0.3
+          image: mgw2168/postgresqlcluster:v0.6
           imagePullPolicy: Always
           name: manager
           securityContext:
@@ -399,6 +399,25 @@ rules:
       - watch
       - get
       - list
+  - apiGroups:
+      - radondb.com
+    resources:
+      - pgclusters
+    verbs:
+      - watch
+      - get
+      - list
+  - apiGroups:
+      - pgcluster.kubesphere.io
+    resources:
+      - postgresqlclusters/status
+    verbs:
+      - get
+      - list
+      - patch
+      - update
+      - create
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding

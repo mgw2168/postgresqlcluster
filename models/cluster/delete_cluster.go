@@ -27,11 +27,6 @@ func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		klog.Errorf("delete cluster json unmarshal error: %s", err.Error())
 		return
 	}
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {

@@ -28,12 +28,6 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		klog.Errorf("restart cluster json unmarshal error: %s", err.Error())
 		return
 	}
-	if resp.Code == pkg.Ok {
-		// update cluster status
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {

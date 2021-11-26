@@ -36,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 
+	radondbcomv1 "github.com/kubesphere/api/v1"
 	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/controllers"
 	"github.com/kubesphere/models"
@@ -51,6 +52,7 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(pgclusterv1alpha1.AddToScheme(scheme))
+	utilruntime.Must(radondbcomv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 

@@ -33,12 +33,6 @@ func CreatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		return
 	}
 
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
-
 	flag := true
 	for i, _ := range pg.Status.Condition {
 		if pg.Status.Condition[i].Api == pkg.CreateUser {

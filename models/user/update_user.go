@@ -32,11 +32,6 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
 		return
 	}
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
 
 	flag := true
 	for i, _ := range pg.Status.Condition {

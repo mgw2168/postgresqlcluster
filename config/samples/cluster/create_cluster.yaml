@@ -2,9 +2,7 @@ apiVersion: pgcluster.kubesphere.io/v1alpha1
 kind: PostgreSQLCluster
 metadata:
   name: pg-test-01
-  namespace: pgtest
 spec:
-  clientVersion: "4.7.1"
   name: "test001"
   namespace: "pgtest"
   syncReplication: true

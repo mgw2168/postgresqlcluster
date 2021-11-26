@@ -29,12 +29,6 @@ func ScaleUpPgCluster(pg *v1alpha1.PostgreSQLCluster, replicaCount int) (err err
 		return
 	}
 
-	if resp.Code == pkg.Ok {
-		pg.Status.State = pkg.Success
-	} else {
-		pg.Status.State = pkg.Failed
-	}
-
 	flag := true
 	for i, _ := range pg.Status.Condition {
 		if pg.Status.Condition[i].Api == pkg.ScaleCluster {

@@ -1,6 +1,7 @@
 domain: kubesphere.io
 layout:
 - go.kubebuilder.io/v3
+multigroup: true
 projectName: postgresqlcluster
 repo: github.com/kubesphere
 resources:
@@ -13,4 +14,13 @@ resources:
   kind: PostgreSQLCluster
   path: github.com/kubesphere/api/v1alpha1
   version: v1alpha1
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: kubesphere.io
+  group: radondb.com
+  kind: Pgcluster
+  path: github.com/kubesphere/apis/radondb.com/v1
+  version: v1
 version: "3"
