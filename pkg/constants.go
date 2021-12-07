@@ -8,7 +8,7 @@ const (
 	srvPort = "8443"
 	// IP svc name.namespace
 	//IP = "http://139.198.21.143"
-	IP = "http://postgres-operator.pgo"
+	IP = "http://postgres-operator.dmp-system"
 	// Cluster path
 	HostPath           = IP + ":" + srvPort
 	CreateClusterPath  = HostPath + "/clusters"
