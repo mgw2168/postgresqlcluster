@@ -19,6 +19,7 @@ package main
 import (
 	"context"
 	"flag"
+	"github.com/kubesphere/pkg"
 	"os"
 	"time"
 
@@ -106,13 +107,13 @@ func main() {
 	informerSc := class.Informer()
 	// informerScLister := class.Lister()
 	var Pgo models.PgoConfig
-	if _, err := Pgo.GetConfig(clientset, "pgo"); err != nil {
+	if _, err := Pgo.GetConfig(clientset, pkg.PgoNamespace); err != nil {
 		klog.Error(err)
 	}
 	informerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			mObj := obj.(*sv1.StorageClass)
-			_, err := Pgo.UpdateCm(clientset, "pgo", mObj)
+			_, err := Pgo.UpdateCm(clientset, pkg.PgoNamespace, mObj)
 			if err != nil {
 				klog.Errorf("update configmap error: %s", err)
 			}

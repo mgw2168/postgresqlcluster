@@ -1,0 +1,1078 @@
+
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.4.1
+  creationTimestamp: null
+  name: pgclusters.radondb.com
+spec:
+  group: radondb.com
+  names:
+    kind: Pgcluster
+    listKind: PgclusterList
+    plural: pgclusters
+    singular: pgcluster
+  scope: Namespaced
+  versions:
+  - name: v1
+    schema:
+      openAPIV3Schema:
+        description: "Pgcluster is the CRD that defines a RadonDB PG Cluster \n swagger:ignore
+          Pgcluster"
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: PgclusterSpec is the CRD that defines a RadonDB PG Cluster
+              Spec swagger:ignore
+            properties:
+              annotations:
+                description: Annotations contains a set of Deployment (and by association,
+                  Pod) annotations that are propagated to all managed Deployments
+                properties:
+                  backrest:
+                    additionalProperties:
+                      type: string
+                    description: Backrest annotations will be propagated **only**
+                      to the pgBackRest managed Deployments
+                    type: object
+                  global:
+                    additionalProperties:
+                      type: string
+                    description: Global annotations will be propagated to **all**
+                      managed Deployments
+                    type: object
+                  pgBouncer:
+                    additionalProperties:
+                      type: string
+                    description: PgBouncer annotations will be propagated **only**
+                      to the PgBouncer managed Deployments
+                    type: object
+                  postgres:
+                    additionalProperties:
+                      type: string
+                    description: Postgres annotations will be propagated **only**
+                      to the PostgreSQL managed deployments
+                    type: object
+                required:
+                - backrest
+                - global
+                - pgBouncer
+                - postgres
+                type: object
+              backrestConfig:
+                items:
+                  description: Projection that may be projected along with other supported
+                    volume types
+                  properties:
+                    configMap:
+                      description: information about the configMap data to project
+                      properties:
+                        items:
+                          description: If unspecified, each key-value pair in the
+                            Data field of the referenced ConfigMap will be projected
+                            into the volume as a file whose name is the key and content
+                            is the value. If specified, the listed keys will be projected
+                            into the specified paths, and unlisted keys will not be
+                            present. If a key is specified which is not present in
+                            the ConfigMap, the volume setup will error unless it is
+                            marked optional. Paths must be relative and may not contain
+                            the '..' path or start with '..'.
+                          items:
+                            description: Maps a string key to a path within a volume.
+                            properties:
+                              key:
+                                description: The key to project.
+                                type: string
+                              mode:
+                                description: 'Optional: mode bits used to set permissions
+                                  on this file. Must be an octal value between 0000
+                                  and 0777 or a decimal value between 0 and 511. YAML
+                                  accepts both octal and decimal values, JSON requires
+                                  decimal values for mode bits. If not specified,
+                                  the volume defaultMode will be used. This might
+                                  be in conflict with other options that affect the
+                                  file mode, like fsGroup, and the result can be other
+                                  mode bits set.'
+                                format: int32
+                                type: integer
+                              path:
+                                description: The relative path of the file to map
+                                  the key to. May not be an absolute path. May not
+                                  contain the path element '..'. May not start with
+                                  the string '..'.
+                                type: string
+                            required:
+                            - key
+                            - path
+                            type: object
+                          type: array
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                        optional:
+                          description: Specify whether the ConfigMap or its keys must
+                            be defined
+                          type: boolean
+                      type: object
+                    downwardAPI:
+                      description: information about the downwardAPI data to project
+                      properties:
+                        items:
+                          description: Items is a list of DownwardAPIVolume file
+                          items:
+                            description: DownwardAPIVolumeFile represents information
+                              to create the file containing the pod field
+                            properties:
+                              fieldRef:
+                                description: 'Required: Selects a field of the pod:
+                                  only annotations, labels, name and namespace are
+                                  supported.'
+                                properties:
+                                  apiVersion:
+                                    description: Version of the schema the FieldPath
+                                      is written in terms of, defaults to "v1".
+                                    type: string
+                                  fieldPath:
+                                    description: Path of the field to select in the
+                                      specified API version.
+                                    type: string
+                                required:
+                                - fieldPath
+                                type: object
+                              mode:
+                                description: 'Optional: mode bits used to set permissions
+                                  on this file, must be an octal value between 0000
+                                  and 0777 or a decimal value between 0 and 511. YAML
+                                  accepts both octal and decimal values, JSON requires
+                                  decimal values for mode bits. If not specified,
+                                  the volume defaultMode will be used. This might
+                                  be in conflict with other options that affect the
+                                  file mode, like fsGroup, and the result can be other
+                                  mode bits set.'
+                                format: int32
+                                type: integer
+                              path:
+                                description: 'Required: Path is  the relative path
+                                  name of the file to be created. Must not be absolute
+                                  or contain the ''..'' path. Must be utf-8 encoded.
+                                  The first item of the relative path must not start
+                                  with ''..'''
+                                type: string
+                              resourceFieldRef:
+                                description: 'Selects a resource of the container:
+                                  only resources limits and requests (limits.cpu,
+                                  limits.memory, requests.cpu and requests.memory)
+                                  are currently supported.'
+                                properties:
+                                  containerName:
+                                    description: 'Container name: required for volumes,
+                                      optional for env vars'
+                                    type: string
+                                  divisor:
+                                    anyOf:
+                                    - type: integer
+                                    - type: string
+                                    description: Specifies the output format of the
+                                      exposed resources, defaults to "1"
+                                    pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                                    x-kubernetes-int-or-string: true
+                                  resource:
+                                    description: 'Required: resource to select'
+                                    type: string
+                                required:
+                                - resource
+                                type: object
+                            required:
+                            - path
+                            type: object
+                          type: array
+                      type: object
+                    secret:
+                      description: information about the secret data to project
+                      properties:
+                        items:
+                          description: If unspecified, each key-value pair in the
+                            Data field of the referenced Secret will be projected
+                            into the volume as a file whose name is the key and content
+                            is the value. If specified, the listed keys will be projected
+                            into the specified paths, and unlisted keys will not be
+                            present. If a key is specified which is not present in
+                            the Secret, the volume setup will error unless it is marked
+                            optional. Paths must be relative and may not contain the
+                            '..' path or start with '..'.
+                          items:
+                            description: Maps a string key to a path within a volume.
+                            properties:
+                              key:
+                                description: The key to project.
+                                type: string
+                              mode:
+                                description: 'Optional: mode bits used to set permissions
+                                  on this file. Must be an octal value between 0000
+                                  and 0777 or a decimal value between 0 and 511. YAML
+                                  accepts both octal and decimal values, JSON requires
+                                  decimal values for mode bits. If not specified,
+                                  the volume defaultMode will be used. This might
+                                  be in conflict with other options that affect the
+                                  file mode, like fsGroup, and the result can be other
+                                  mode bits set.'
+                                format: int32
+                                type: integer
+                              path:
+                                description: The relative path of the file to map
+                                  the key to. May not be an absolute path. May not
+                                  contain the path element '..'. May not start with
+                                  the string '..'.
+                                type: string
+                            required:
+                            - key
+                            - path
+                            type: object
+                          type: array
+                        name:
+                          description: 'Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names
+                            TODO: Add other useful fields. apiVersion, kind, uid?'
+                          type: string
+                        optional:
+                          description: Specify whether the Secret or its key must
+                            be defined
+                          type: boolean
+                      type: object
+                    serviceAccountToken:
+                      description: information about the serviceAccountToken data
+                        to project
+                      properties:
+                        audience:
+                          description: Audience is the intended audience of the token.
+                            A recipient of a token must identify itself with an identifier
+                            specified in the audience of the token, and otherwise
+                            should reject the token. The audience defaults to the
+                            identifier of the apiserver.
+                          type: string
+                        expirationSeconds:
+                          description: ExpirationSeconds is the requested duration
+                            of validity of the service account token. As the token
+                            approaches expiration, the kubelet volume plugin will
+                            proactively rotate the service account token. The kubelet
+                            will start trying to rotate the token if the token is
+                            older than 80 percent of its time to live or if the token
+                            is older than 24 hours.Defaults to 1 hour and must be
+                            at least 10 minutes.
+                          format: int64
+                          type: integer
+                        path:
+                          description: Path is the path relative to the mount point
+                            of the file to project the token into.
+                          type: string
+                      required:
+                      - path
+                      type: object
+                  type: object
+                type: array
+              backrestGCSBucket:
+                type: string
+              backrestGCSEndpoint:
+                type: string
+              backrestGCSKeyType:
+                type: string
+              backrestLimits:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: BackrestLimits, if specified, contains the container
+                  resource limits for the pgBackRest Deployment for this PostgreSQL
+                  cluster
+                type: object
+              backrestRepoPath:
+                type: string
+              backrestResources:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: BackrestResources, if specified, contains the container
+                  request resources for the pgBackRest Deployment for this PostgreSQL
+                  cluster
+                type: object
+              backrestS3Bucket:
+                type: string
+              backrestS3Endpoint:
+                type: string
+              backrestS3Region:
+                type: string
+              backrestS3URIStyle:
+                type: string
+              backrestS3VerifyTLS:
+                type: string
+              backrestStorage:
+                properties:
+                  accessmode:
+                    type: string
+                  matchLabels:
+                    type: string
+                  name:
+                    type: string
+                  size:
+                    type: string
+                  storageclass:
+                    type: string
+                  storagetype:
+                    type: string
+                  supplementalgroups:
+                    type: string
+                required:
+                - accessmode
+                - matchLabels
+                - name
+                - size
+                - storageclass
+                - storagetype
+                - supplementalgroups
+                type: object
+              backrestStorageTypes:
+                description: 'BackrestStorageTypes is a list of the different pgBackRest
+                  storage types to be used for this cluster. Presently, it can only
+                  accept the following: - local - s3 - gcs - local,s3 - local,gcs
+                  if the array is empty, "local" ("posix") is presumed.'
+                items:
+                  description: BackrestStorageType refers to the types of storage
+                    accept by pgBackRest
+                  type: string
+                type: array
+              ccpimage:
+                type: string
+              ccpimageprefix:
+                type: string
+              ccpimagetag:
+                type: string
+              clustername:
+                type: string
+              customconfig:
+                type: string
+              database:
+                type: string
+              disableAutofail:
+                description: DisableAutofail, if set to true, disables the autofail/HA
+                  capabilities We choose this, instead of the affirmative, so that
+                  way we default to autofail being on, given we're doing some legacy
+                  CRD stuff here
+                type: boolean
+              exporter:
+                description: Exporter, if set to true, enables the exporter sidecar
+                type: boolean
+              exporterLimits:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: ExporterLimits, if specified, contains the container
+                  resource limits for the RadonDB Postgres Exporter Deployment for
+                  this PostgreSQL cluster
+                type: object
+              exporterResources:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: ExporterResources, if specified, contains the container
+                  request resources for the RadonDB Postgres Exporter Deployment for
+                  this PostgreSQL cluster
+                type: object
+              exporterport:
+                type: string
+              limits:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: "Limits stores the CPU/memory limits to use with PostgreSQL
+                  instances \n A long note on memory limits. \n  We want to avoid
+                  the OOM killer coming for the PostgreSQL process or any of their
+                  backends per lots of guidance from the PostgreSQL documentation.
+                  Based on Kubernetes' behavior with limits, the best thing is to
+                  not set them. However, if they ever do set, we suggest that you
+                  have Request == Limit to get the Guaranteed QoS \n Guaranteed QoS
+                  prevents a backend from being first in line to be killed if the
+                  *Node* has memory pressure, but if there is, say a runaway client
+                  backend that causes the *Pod* to exceed its memory limit, a backend
+                  can still be killed by the OOM killer, which is not great. \n As
+                  such, given the choice, the preference is for the Pod to be evicted
+                  and have a failover event, vs. having an individual client backend
+                  killed and causing potential \"bad things.\" \n For more info on
+                  PostgreSQL and Kubernetes memory management, see: \n https://www.postgresql.org/docs/current/kernel-resources.html#LINUX-MEMORY-OVERCOMMIT
+                  https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#how-pods-with-resource-limits-are-run"
+                type: object
+              name:
+                type: string
+              nodeAffinity:
+                description: "NodeAffinitySpec contains optional NodeAffinity rules
+                  for the different deployment types managed by the Operator. While
+                  similar to how the Operator handles pod anti-affinity, makes reference
+                  to the supported Kubernetes objects to maintain more familiarity
+                  and consistency. \n All of these are optional, so one must ensure
+                  they check for nils."
+                properties:
+                  default:
+                    description: Node affinity is a group of node affinity scheduling
+                      rules.
+                    properties:
+                      preferredDuringSchedulingIgnoredDuringExecution:
+                        description: The scheduler will prefer to schedule pods to
+                          nodes that satisfy the affinity expressions specified by
+                          this field, but it may choose a node that violates one or
+                          more of the expressions. The node that is most preferred
+                          is the one with the greatest sum of weights, i.e. for each
+                          node that meets all of the scheduling requirements (resource
+                          request, requiredDuringScheduling affinity expressions,
+                          etc.), compute a sum by iterating through the elements of
+                          this field and adding "weight" to the sum if the node matches
+                          the corresponding matchExpressions; the node(s) with the
+                          highest sum are the most preferred.
+                        items:
+                          description: An empty preferred scheduling term matches
+                            all objects with implicit weight 0 (i.e. it's a no-op).
+                            A null preferred scheduling term matches no objects (i.e.
+                            is also a no-op).
+                          properties:
+                            preference:
+                              description: A node selector term, associated with the
+                                corresponding weight.
+                              properties:
+                                matchExpressions:
+                                  description: A list of node selector requirements
+                                    by node's labels.
+                                  items:
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      operator that relates the key and values.
+                                    properties:
+                                      key:
+                                        description: The label key that the selector
+                                          applies to.
+                                        type: string
+                                      operator:
+                                        description: Represents a key's relationship
+                                          to a set of values. Valid operators are
+                                          In, NotIn, Exists, DoesNotExist. Gt, and
+                                          Lt.
+                                        type: string
+                                      values:
+                                        description: An array of string values. If
+                                          the operator is In or NotIn, the values
+                                          array must be non-empty. If the operator
+                                          is Exists or DoesNotExist, the values array
+                                          must be empty. If the operator is Gt or
+                                          Lt, the values array must have a single
+                                          element, which will be interpreted as an
+                                          integer. This array is replaced during a
+                                          strategic merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                matchFields:
+                                  description: A list of node selector requirements
+                                    by node's fields.
+                                  items:
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      operator that relates the key and values.
+                                    properties:
+                                      key:
+                                        description: The label key that the selector
+                                          applies to.
+                                        type: string
+                                      operator:
+                                        description: Represents a key's relationship
+                                          to a set of values. Valid operators are
+                                          In, NotIn, Exists, DoesNotExist. Gt, and
+                                          Lt.
+                                        type: string
+                                      values:
+                                        description: An array of string values. If
+                                          the operator is In or NotIn, the values
+                                          array must be non-empty. If the operator
+                                          is Exists or DoesNotExist, the values array
+                                          must be empty. If the operator is Gt or
+                                          Lt, the values array must have a single
+                                          element, which will be interpreted as an
+                                          integer. This array is replaced during a
+                                          strategic merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                              type: object
+                            weight:
+                              description: Weight associated with matching the corresponding
+                                nodeSelectorTerm, in the range 1-100.
+                              format: int32
+                              type: integer
+                          required:
+                          - preference
+                          - weight
+                          type: object
+                        type: array
+                      requiredDuringSchedulingIgnoredDuringExecution:
+                        description: If the affinity requirements specified by this
+                          field are not met at scheduling time, the pod will not be
+                          scheduled onto the node. If the affinity requirements specified
+                          by this field cease to be met at some point during pod execution
+                          (e.g. due to an update), the system may or may not try to
+                          eventually evict the pod from its node.
+                        properties:
+                          nodeSelectorTerms:
+                            description: Required. A list of node selector terms.
+                              The terms are ORed.
+                            items:
+                              description: A null or empty node selector term matches
+                                no objects. The requirements of them are ANDed. The
+                                TopologySelectorTerm type implements a subset of the
+                                NodeSelectorTerm.
+                              properties:
+                                matchExpressions:
+                                  description: A list of node selector requirements
+                                    by node's labels.
+                                  items:
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      operator that relates the key and values.
+                                    properties:
+                                      key:
+                                        description: The label key that the selector
+                                          applies to.
+                                        type: string
+                                      operator:
+                                        description: Represents a key's relationship
+                                          to a set of values. Valid operators are
+                                          In, NotIn, Exists, DoesNotExist. Gt, and
+                                          Lt.
+                                        type: string
+                                      values:
+                                        description: An array of string values. If
+                                          the operator is In or NotIn, the values
+                                          array must be non-empty. If the operator
+                                          is Exists or DoesNotExist, the values array
+                                          must be empty. If the operator is Gt or
+                                          Lt, the values array must have a single
+                                          element, which will be interpreted as an
+                                          integer. This array is replaced during a
+                                          strategic merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                                matchFields:
+                                  description: A list of node selector requirements
+                                    by node's fields.
+                                  items:
+                                    description: A node selector requirement is a
+                                      selector that contains values, a key, and an
+                                      operator that relates the key and values.
+                                    properties:
+                                      key:
+                                        description: The label key that the selector
+                                          applies to.
+                                        type: string
+                                      operator:
+                                        description: Represents a key's relationship
+                                          to a set of values. Valid operators are
+                                          In, NotIn, Exists, DoesNotExist. Gt, and
+                                          Lt.
+                                        type: string
+                                      values:
+                                        description: An array of string values. If
+                                          the operator is In or NotIn, the values
+                                          array must be non-empty. If the operator
+                                          is Exists or DoesNotExist, the values array
+                                          must be empty. If the operator is Gt or
+                                          Lt, the values array must have a single
+                                          element, which will be interpreted as an
+                                          integer. This array is replaced during a
+                                          strategic merge patch.
+                                        items:
+                                          type: string
+                                        type: array
+                                    required:
+                                    - key
+                                    - operator
+                                    type: object
+                                  type: array
+                              type: object
+                            type: array
+                        required:
+                        - nodeSelectorTerms
+                        type: object
+                    type: object
+                required:
+                - default
+                type: object
+              passwordType:
+                type: string
+              pgAdminStorage:
+                properties:
+                  accessmode:
+                    type: string
+                  matchLabels:
+                    type: string
+                  name:
+                    type: string
+                  size:
+                    type: string
+                  storageclass:
+                    type: string
+                  storagetype:
+                    type: string
+                  supplementalgroups:
+                    type: string
+                required:
+                - accessmode
+                - matchLabels
+                - name
+                - size
+                - storageclass
+                - storagetype
+                - supplementalgroups
+                type: object
+              pgBadger:
+                description: PGBadger, if set to true, enables the pgBadger sidecar
+                type: boolean
+              pgBouncer:
+                description: PgBouncer contains all of the settings to properly maintain
+                  a pgBouncer implementation
+                properties:
+                  limits:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Limits, if specified, contains the container resource
+                      limits for any pgBouncer Deployments that are part of a PostgreSQL
+                      cluster
+                    type: object
+                  replicas:
+                    description: "Replicas represents the total number of Pods to
+                      deploy with pgBouncer, which effectively enables/disables the
+                      pgBouncer. \n if it is set to 0 or less, it is disabled. \n
+                      if it is set to 1 or more, it is enabled"
+                    format: int32
+                    type: integer
+                  resources:
+                    additionalProperties:
+                      anyOf:
+                      - type: integer
+                      - type: string
+                      pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                      x-kubernetes-int-or-string: true
+                    description: Resources, if specified, contains the container request
+                      resources for any pgBouncer Deployments that are part of a PostgreSQL
+                      cluster
+                    type: object
+                  serviceType:
+                    description: ServiceType references the type of Service that should
+                      be used when deploying the pgBouncer instances. If unset, it
+                      defaults to the value of the PostgreSQL cluster.
+                    type: string
+                  tlsSecret:
+                    description: 'TLSSecret contains the name of the secret to use
+                      that contains the TLS keypair for pgBouncer This follows the
+                      Kubernetes secret format ("kubernetes.io/tls") which has two
+                      keys: tls.crt and tls.key'
+                    type: string
+                required:
+                - limits
+                - replicas
+                - resources
+                - serviceType
+                - tlsSecret
+                type: object
+              pgDataSource:
+                description: PGDataSourceSpec defines the data source that should
+                  be used to populate the initial PGDATA directory when bootstrapping
+                  a new PostgreSQL cluster swagger:ignore
+                properties:
+                  namespace:
+                    type: string
+                  restoreFrom:
+                    type: string
+                  restoreOpts:
+                    type: string
+                required:
+                - namespace
+                - restoreFrom
+                - restoreOpts
+                type: object
+              pgbadgerport:
+                type: string
+              pgoimageprefix:
+                type: string
+              podAntiAffinity:
+                description: "PodAntiAffinitySpec provides multiple configurations
+                  for how pod anti-affinity can be set. - \"Default\" is the default
+                  rule that applies to all Pods that are a part of \t\tthe PostgreSQL
+                  cluster - \"PgBackrest\" applies just to the pgBackRest repository
+                  Pods in said \t\tDeployment - \"PgBouncer\" applies to just pgBouncer
+                  Pods in said Deployment swaggier:ignore"
+                properties:
+                  default:
+                    description: PodAntiAffinityType defines the different types of
+                      type of anti-affinity rules applied to pg clusters when utilizing
+                      the default pod anti-affinity rules provided by the PostgreSQL
+                      Operator, which are enabled for a new pg cluster by default.  Valid
+                      Values include "required" for requiredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, "preferred" for preferredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, and "disabled" to disable the default pod anti-affinity
+                      rules for the pg cluster all together.
+                    type: string
+                  pgBackRest:
+                    description: PodAntiAffinityType defines the different types of
+                      type of anti-affinity rules applied to pg clusters when utilizing
+                      the default pod anti-affinity rules provided by the PostgreSQL
+                      Operator, which are enabled for a new pg cluster by default.  Valid
+                      Values include "required" for requiredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, "preferred" for preferredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, and "disabled" to disable the default pod anti-affinity
+                      rules for the pg cluster all together.
+                    type: string
+                  pgBouncer:
+                    description: PodAntiAffinityType defines the different types of
+                      type of anti-affinity rules applied to pg clusters when utilizing
+                      the default pod anti-affinity rules provided by the PostgreSQL
+                      Operator, which are enabled for a new pg cluster by default.  Valid
+                      Values include "required" for requiredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, "preferred" for preferredDuringSchedulingIgnoredDuringExecution
+                      anti-affinity, and "disabled" to disable the default pod anti-affinity
+                      rules for the pg cluster all together.
+                    type: string
+                required:
+                - default
+                - pgBackRest
+                - pgBouncer
+                type: object
+              policies:
+                type: string
+              port:
+                type: string
+              primaryStorage:
+                properties:
+                  accessmode:
+                    type: string
+                  matchLabels:
+                    type: string
+                  name:
+                    type: string
+                  size:
+                    type: string
+                  storageclass:
+                    type: string
+                  storagetype:
+                    type: string
+                  supplementalgroups:
+                    type: string
+                required:
+                - accessmode
+                - matchLabels
+                - name
+                - size
+                - storageclass
+                - storagetype
+                - supplementalgroups
+                type: object
+              replicaStorage:
+                properties:
+                  accessmode:
+                    type: string
+                  matchLabels:
+                    type: string
+                  name:
+                    type: string
+                  size:
+                    type: string
+                  storageclass:
+                    type: string
+                  storagetype:
+                    type: string
+                  supplementalgroups:
+                    type: string
+                required:
+                - accessmode
+                - matchLabels
+                - name
+                - size
+                - storageclass
+                - storagetype
+                - supplementalgroups
+                type: object
+              replicas:
+                type: string
+              resources:
+                additionalProperties:
+                  anyOf:
+                  - type: integer
+                  - type: string
+                  pattern: ^(\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\+|-)?(([0-9]+(\.[0-9]*)?)|(\.[0-9]+))))?$
+                  x-kubernetes-int-or-string: true
+                description: 'Resources behaves just like the "Requests" section of
+                  a Kubernetes container definition. You can set individual items
+                  such as "cpu" and "memory", e.g. "{ cpu: "0.5", memory: "2Gi" }"'
+                type: object
+              serviceType:
+                description: ServiceType references the type of Service that should
+                  be used when deploying PostgreSQL instances
+                type: string
+              shutdown:
+                type: boolean
+              standby:
+                type: boolean
+              status:
+                type: string
+              syncReplication:
+                type: boolean
+              tablespaceMounts:
+                additionalProperties:
+                  properties:
+                    accessmode:
+                      type: string
+                    matchLabels:
+                      type: string
+                    name:
+                      type: string
+                    size:
+                      type: string
+                    storageclass:
+                      type: string
+                    storagetype:
+                      type: string
+                    supplementalgroups:
+                      type: string
+                  required:
+                  - accessmode
+                  - matchLabels
+                  - name
+                  - size
+                  - storageclass
+                  - storagetype
+                  - supplementalgroups
+                  type: object
+                type: object
+              tls:
+                description: TLSSpec contains the information to set up a TLS-enabled
+                  PostgreSQL cluster
+                properties:
+                  caSecret:
+                    description: 'CASecret contains the name of the secret to use
+                      as the trusted CA for the TLSSecret This is our own format and
+                      should contain at least one key: "ca.crt" It can also contain
+                      a key "ca.crl" which is the certificate revocation list'
+                    type: string
+                  replicationTLSSecret:
+                    description: ReplicationTLSSecret contains the name of the secret
+                      that specifies a TLS keypair that can be used by the replication
+                      user (e.g. "primaryuser") to perform certificate based authentication
+                      between replicas. The keypair must be considered valid by the
+                      CA specified in the CASecret
+                    type: string
+                  tlsSecret:
+                    description: 'TLSSecret contains the name of the secret to use
+                      that contains the TLS keypair for the PostgreSQL server This
+                      follows the Kubernetes secret format ("kubernetes.io/tls") which
+                      has two keys: tls.crt and tls.key'
+                    type: string
+                required:
+                - caSecret
+                - replicationTLSSecret
+                - tlsSecret
+                type: object
+              tlsOnly:
+                type: boolean
+              tolerations:
+                description: Tolerations are an optional list of Pod toleration rules
+                  that are applied to the PostgreSQL instance.
+                items:
+                  description: The pod this Toleration is attached to tolerates any
+                    taint that matches the triple <key,value,effect> using the matching
+                    operator <operator>.
+                  properties:
+                    effect:
+                      description: Effect indicates the taint effect to match. Empty
+                        means match all taint effects. When specified, allowed values
+                        are NoSchedule, PreferNoSchedule and NoExecute.
+                      type: string
+                    key:
+                      description: Key is the taint key that the toleration applies
+                        to. Empty means match all taint keys. If the key is empty,
+                        operator must be Exists; this combination means to match all
+                        values and all keys.
+                      type: string
+                    operator:
+                      description: Operator represents a key's relationship to the
+                        value. Valid operators are Exists and Equal. Defaults to Equal.
+                        Exists is equivalent to wildcard for value, so that a pod
+                        can tolerate all taints of a particular category.
+                      type: string
+                    tolerationSeconds:
+                      description: TolerationSeconds represents the period of time
+                        the toleration (which must be of effect NoExecute, otherwise
+                        this field is ignored) tolerates the taint. By default, it
+                        is not set, which means tolerate the taint forever (do not
+                        evict). Zero and negative values will be treated as 0 (evict
+                        immediately) by the system.
+                      format: int64
+                      type: integer
+                    value:
+                      description: Value is the taint value the toleration matches
+                        to. If the operator is Exists, the value should be empty,
+                        otherwise just a regular string.
+                      type: string
+                  type: object
+                type: array
+              user:
+                type: string
+              userlabels:
+                additionalProperties:
+                  type: string
+                type: object
+              walStorage:
+                properties:
+                  accessmode:
+                    type: string
+                  matchLabels:
+                    type: string
+                  name:
+                    type: string
+                  size:
+                    type: string
+                  storageclass:
+                    type: string
+                  storagetype:
+                    type: string
+                  supplementalgroups:
+                    type: string
+                required:
+                - accessmode
+                - matchLabels
+                - name
+                - size
+                - storageclass
+                - storagetype
+                - supplementalgroups
+                type: object
+            required:
+            - annotations
+            - backrestConfig
+            - backrestGCSBucket
+            - backrestGCSEndpoint
+            - backrestGCSKeyType
+            - backrestLimits
+            - backrestRepoPath
+            - backrestResources
+            - backrestS3Bucket
+            - backrestS3Endpoint
+            - backrestS3Region
+            - backrestS3URIStyle
+            - backrestS3VerifyTLS
+            - backrestStorage
+            - backrestStorageTypes
+            - ccpimage
+            - ccpimageprefix
+            - ccpimagetag
+            - clustername
+            - customconfig
+            - database
+            - disableAutofail
+            - exporter
+            - exporterLimits
+            - exporterResources
+            - exporterport
+            - limits
+            - name
+            - nodeAffinity
+            - passwordType
+            - pgAdminStorage
+            - pgBadger
+            - pgBouncer
+            - pgDataSource
+            - pgbadgerport
+            - pgoimageprefix
+            - podAntiAffinity
+            - policies
+            - port
+            - primaryStorage
+            - replicaStorage
+            - replicas
+            - resources
+            - serviceType
+            - shutdown
+            - standby
+            - status
+            - syncReplication
+            - tablespaceMounts
+            - tls
+            - tlsOnly
+            - tolerations
+            - user
+            - userlabels
+            - walStorage
+            type: object
+          status:
+            description: PgclusterStatus is the CRD that defines PG Cluster Status
+              swagger:ignore
+            properties:
+              message:
+                type: string
+              state:
+                description: PgclusterState is the crd that defines PG Cluster Stage
+                  swagger:ignore
+                type: string
+            type: object
+        required:
+        - metadata
+        - spec
+        type: object
+    served: true
+    storage: true
+status:
+  acceptedNames:
+    kind: ""
+    plural: ""
+  conditions: []
+  storedVersions: []
