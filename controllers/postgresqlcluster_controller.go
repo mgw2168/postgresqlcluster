@@ -75,8 +75,8 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 
 	if string(pgc.Status.State) != "" {
 		pgCluster.Status.State = string(pgc.Status.State)
+		err = r.Status().Update(ctx, pgCluster)
 	}
-	err = r.Status().Update(ctx, pgCluster)
 	return ctrl.Result{RequeueAfter: checkTime}, err
 }
 
