@@ -92,12 +92,34 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 			}
 		}
 	}
-
-	// list user
-	if oldObj.Spec.Username != newObj.Spec.Username && newObj.Spec.Password == "" {
-		err = user.ListPgUser(newObj)
+	// delete user
+	if oldObj.Spec.Username != "" && newObj.Spec.Username == "" {
+		// delete user
+		err = user.DeletePgUser(newObj, oldObj.Spec.Username)
 		if err != nil {
-			klog.Errorf("list user error: %s", err.Error())
+			klog.Errorf("delete user error: %s", err.Error())
+		}
+	}
+
+	// update user passwd
+	if oldObj.Spec.Username != "" && oldObj.Spec.Username == newObj.Spec.Username && oldObj.Spec.Password != newObj.Spec.Password {
+		// update password
+		err = user.UpdatePgUser(newObj, newObj.Spec.Username, newObj.Spec.Password)
+		if err != nil {
+			klog.Errorf("update password error: %s", err.Error())
+		}
+	}
+
+	// delete default user and create new user
+	if oldObj.Spec.Username != "" && oldObj.Spec.Username != newObj.Spec.Username {
+		err = user.DeletePgUser(newObj, oldObj.Spec.Username)
+		if err != nil {
+			klog.Errorf("delete user error: %s", err.Error())
+		}
+		// update password
+		err = user.CreatePgUser(newObj, newObj.Spec.Username, newObj.Spec.Password)
+		if err != nil {
+			klog.Errorf("update password error: %s", err.Error())
 		}
 	}
 	return nil

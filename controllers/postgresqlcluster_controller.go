@@ -70,7 +70,7 @@ func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}, pgc)
 	if err != nil {
 		klog.Errorf("get pgcluster resource error: %s", err)
-		return ctrl.Result{RequeueAfter: checkTime}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
 	if string(pgc.Status.State) != "" {
