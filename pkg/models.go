@@ -28,7 +28,9 @@ type CreatePgCluster struct {
 	Password        string
 	StorageConfig   string
 	PVCSize         string
-	AutofailFlag    bool
+
+	ReplicaStorageConfig string
+	AutofailFlag         bool
 }
 
 type CreateClusterResponse struct {
