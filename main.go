@@ -20,6 +20,7 @@ import (
 	"context"
 	"flag"
 	"github.com/kubesphere/pkg"
+	v1 "k8s.io/api/core/v1"
 	"os"
 	"time"
 
@@ -102,14 +103,34 @@ func main() {
 	if err != nil {
 		os.Exit(1)
 	}
-	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
-	class := sharedInformers.Storage().V1().StorageClasses()
-	informerSc := class.Informer()
-	// informerScLister := class.Lister()
+
 	var Pgo models.PgoConfig
 	if _, err := Pgo.GetConfig(clientset, pkg.PgoNamespace); err != nil {
 		klog.Error(err)
 	}
+
+	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
+	class := sharedInformers.Storage().V1().StorageClasses()
+	informerSc := class.Informer()
+	cmInformer := sharedInformers.Core().V1().ConfigMaps().Informer()
+	cmInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			cm, ok := obj.(*v1.ConfigMap)
+			if ok {
+				if pkg.PgoNamespace == cm.GetNamespace() && models.CustomConfigMapName == cm.GetName() {
+					_, err = Pgo.UpdateCmInformer(clientset, pkg.PgoNamespace, cm)
+					if err != nil {
+						klog.Errorf("update configmap error: ", err)
+					}
+					klog.Infof("update cm %s success!", models.CustomConfigMapName)
+				}
+			}
+		},
+		UpdateFunc: nil,
+		DeleteFunc: nil,
+	})
+	// informerScLister := class.Lister()
+
 	informerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
 			mObj := obj.(*sv1.StorageClass)
