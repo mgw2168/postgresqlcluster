@@ -20,7 +20,10 @@ import (
 	"context"
 	v1 "github.com/kubesphere/api/v1"
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/eventhandler"
 	"github.com/kubesphere/models/cluster"
+	corev1 "k8s.io/api/core/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,6 +36,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"time"
@@ -89,7 +93,18 @@ func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		r.Scheme = mgr.GetScheme()
 	}
 	return ctrl.NewControllerManagedBy(mgr).
+		WithEventFilter(&predicate.Funcs{
+			// we only handler event we care about, filter by name and namespace of resource
+			UpdateFunc: eventhandler.UpdateEventFilter,
+		}).
 		For(&v1alpha1.PostgreSQLCluster{}).
+		Watches(&source.Kind{Type: &storagev1.StorageClass{}}, handler.Funcs{
+			// when a new storage class added, we also need to update it to pgcluster operator
+			CreateFunc: eventhandler.WhenStorageClassCreated,
+		}).
+		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, handler.Funcs{
+			UpdateFunc: eventhandler.WhenConfigMapUpdated,
+		}).
 		Complete(r)
 }
 
@@ -97,6 +112,7 @@ func Add(mgr manager.Manager) error {
 	return add(mgr, newReconciler(mgr))
 }
 
+// TODO NEED OPTIMIZED: should compare with pgcluster CR to decide how to reconcile resource, might lost change for pgcluster in this case
 func add(mgr manager.Manager, r reconcile.Reconciler) error {
 	// Create a new controller
 	c, err := controller.New("postgresqlCluster-controller", mgr, controller.Options{Reconciler: r})
