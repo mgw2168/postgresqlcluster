@@ -17,31 +17,18 @@ limitations under the License.
 package main
 
 import (
-	"context"
 	"flag"
-	"github.com/kubesphere/pkg"
-	v1 "k8s.io/api/core/v1"
-	"os"
-	"time"
-
-	sv1 "k8s.io/api/storage/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
-	"k8s.io/client-go/informers"
-	"k8s.io/client-go/kubernetes"
-	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"k8s.io/client-go/tools/cache"
-	"k8s.io/klog/v2"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/healthz"
-	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
-
 	radondbcomv1 "github.com/kubesphere/api/v1"
 	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/controllers"
-	"github.com/kubesphere/models"
+	"k8s.io/apimachinery/pkg/runtime"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
+	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	"os"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/healthz"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -83,6 +70,9 @@ func main() {
 		LeaderElection:         enableLeaderElection,
 		LeaderElectionID:       "d61cefd2.kubesphere.io",
 	})
+	if err != nil {
+		setupLog.Error(err, "setup manager failed")
+	}
 
 	err = controllers.Add(mgr)
 	if err != nil {
@@ -95,63 +85,6 @@ func main() {
 		Scheme: mgr.GetScheme(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "PostgreSQLCluster")
-		os.Exit(1)
-	}
-	//storageclass逻辑
-	// create a client for kube resources
-	clientset, err := kubernetes.NewForConfig(ctrl.GetConfigOrDie())
-	if err != nil {
-		os.Exit(1)
-	}
-
-	var Pgo models.PgoConfig
-	if _, err := Pgo.GetConfig(clientset, pkg.PgoNamespace); err != nil {
-		klog.Error(err)
-	}
-
-	sharedInformers := informers.NewSharedInformerFactory(clientset, time.Minute)
-	class := sharedInformers.Storage().V1().StorageClasses()
-	informerSc := class.Informer()
-	cmInformer := sharedInformers.Core().V1().ConfigMaps().Informer()
-	cmInformer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			cm, ok := obj.(*v1.ConfigMap)
-			if ok {
-				if pkg.PgoNamespace == cm.GetNamespace() && models.CustomConfigMapName == cm.GetName() {
-					_, err = Pgo.UpdateCmInformer(clientset, pkg.PgoNamespace, cm)
-					if err != nil {
-						klog.Errorf("update configmap error: ", err)
-					}
-					klog.Infof("update cm %s success!", models.CustomConfigMapName)
-				}
-			}
-		},
-		UpdateFunc: nil,
-		DeleteFunc: nil,
-	})
-	// informerScLister := class.Lister()
-
-	informerSc.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			mObj := obj.(*sv1.StorageClass)
-			_, err := Pgo.UpdateCm(clientset, pkg.PgoNamespace, mObj)
-			if err != nil {
-				klog.Errorf("update configmap error: %s", err)
-			}
-			klog.Infof("New StorageClass Added to Store: %s", mObj.Name)
-		},
-		UpdateFunc: func(oldObj interface{}, newObj interface{}) {
-		},
-		DeleteFunc: func(obj interface{}) {
-		},
-	})
-	stopCh := make(chan struct{})
-	if err := mgr.Add(manager.RunnableFunc(func(context.Context) error {
-		sharedInformers.Start(stopCh)
-		sharedInformers.WaitForCacheSync(stopCh)
-		return nil
-	})); err != nil {
-		setupLog.Error(err, "unable to set up sc informer")
 		os.Exit(1)
 	}
 
