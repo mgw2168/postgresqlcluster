@@ -5,12 +5,12 @@
 replicaCount: 1
 
 manager:
-  image: mgw2168/postgresqlcluster
-  pullPolicy: IfNotPresent
-  tag: "v0.3"
+  image: radondb/postgresqlcluster
+  pullPolicy: Always
+  tag: "v0.1"
 
 rbacProxy:
-  image: gcr.io/kubebuilder/kube-rbac-proxy
+  image: kubesphere/kube-rbac-proxy
   pullPolicy: IfNotPresent
   tag: "v0.8.0"
 

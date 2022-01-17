@@ -15,6 +15,8 @@ COPY main.go main.go
 COPY api/ api/
 COPY pkg/ pkg/
 COPY models/ models/
+COPY k8sclient/ k8sclient/
+COPY eventhandler/ eventhandler/
 COPY controllers/ controllers/
 
 # Build
