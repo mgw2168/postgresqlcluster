@@ -1,6 +1,9 @@
 package pkg
 
-import v1 "k8s.io/api/core/v1"
+import (
+	"github.com/kubesphere/api/v1alpha1"
+	v1 "k8s.io/api/core/v1"
+)
 
 type Status struct {
 	// status code
@@ -239,4 +242,42 @@ type ShowUserRequest struct {
 type ShowUserResponse struct {
 	Results []UserResponseDetail
 	Status
+}
+
+type PGClusterInfo struct {
+	Cluster struct {
+		Spec struct {
+			Limits struct {
+				CPU    string
+				Memory string
+			}
+			Resources struct {
+				CPU    string
+				Memory string
+			}
+			Replicas       string
+			PrimaryStorage v1alpha1.PgStorageSpec
+		}
+	}
+}
+
+type ShowClusterResponse struct {
+	Results []PGClusterInfo
+	Status
+}
+
+func (r ShowUserResponse) IsUserExisted(user v1alpha1.User) (int, bool) {
+	for i, u := range r.Results {
+		if u.Username == user.UserName {
+			return i, true
+		}
+	}
+	return 0, false
+}
+
+func (u UserResponseDetail) NeedUpdate(user v1alpha1.User) bool {
+	if u.Username == user.UserName && u.Password != user.Password {
+		return true
+	}
+	return false
 }

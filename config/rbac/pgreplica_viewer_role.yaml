@@ -1,0 +1,20 @@
+# permissions for end users to view pgreplicas.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: pgreplica-viewer-role
+rules:
+- apiGroups:
+  - radondb.com.kubesphere.io
+  resources:
+  - pgreplicas
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - radondb.com.kubesphere.io
+  resources:
+  - pgreplicas/status
+  verbs:
+  - get

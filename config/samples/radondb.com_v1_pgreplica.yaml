@@ -1,0 +1,6 @@
+apiVersion: radondb.com.kubesphere.io/v1
+kind: Pgreplica
+metadata:
+  name: pgreplica-sample
+spec:
+  # TODO(user): Add fields here

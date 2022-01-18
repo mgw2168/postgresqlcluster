@@ -1,6 +1,5 @@
 /*
 Copyright 2021.
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
@@ -18,26 +17,18 @@ package controllers
 
 import (
 	"context"
-	v1 "github.com/kubesphere/api/v1"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/eventhandler"
 	"github.com/kubesphere/models/cluster"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"time"
 )
@@ -62,26 +53,60 @@ var (
 //+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters/finalizers,verbs=update
 
 func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	klog.Infof("start reconcile postgresqlcluster.")
+
 	_ = log.FromContext(ctx)
-	pgCluster := &v1alpha1.PostgreSQLCluster{}
-	if err := r.Get(ctx, req.NamespacedName, pgCluster); err != nil {
-		return ctrl.Result{}, client.IgnoreNotFound(err)
-	}
-	pgc := &v1.Pgcluster{}
-	err := r.Get(ctx, types.NamespacedName{
-		Namespace: pgCluster.Namespace,
-		Name:      pgCluster.Name,
-	}, pgc)
-	if err != nil {
-		klog.Errorf("get pgcluster resource error: %s", err)
+	fakePGC := v1alpha1.PostgreSQLCluster{}
+	if err := r.Get(ctx, req.NamespacedName, &fakePGC); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	if string(pgc.Status.State) != "" {
-		pgCluster.Status.State = string(pgc.Status.State)
-		err = r.Status().Update(ctx, pgCluster)
+	// when postgresqlcluster is deleted
+	if !fakePGC.ObjectMeta.DeletionTimestamp.IsZero() {
+		//delete cluster
+		if err := cluster.DeletePgCluster(&fakePGC); err != nil {
+			return ctrl.Result{}, err
+		}
+		fakePGC.ObjectMeta.Finalizers = []string{}
+		return ctrl.Result{}, r.Client.Update(ctx, &fakePGC)
 	}
-	return ctrl.Result{RequeueAfter: checkTime}, err
+
+	// create cluster
+	if fakePGC.ObjectMeta.DeletionTimestamp.IsZero() && len(fakePGC.ObjectMeta.Finalizers) == 0 {
+		if err := cluster.CreatePgCluster(&fakePGC); err != nil {
+			klog.Errorf("create Pgcluster resource error: %s", err)
+			return ctrl.Result{}, err
+		}
+		fakePGC.ObjectMeta.Finalizers = append(fakePGC.ObjectMeta.Finalizers, "finalizers.postgresqlcluster.radondb.com/created")
+		return r.updateSpecThenReturn(ctx, &fakePGC)
+	}
+
+	// waiting cluster initialized done
+	if fakePGC.ObjectMeta.DeletionTimestamp.IsZero() && len(fakePGC.ObjectMeta.Finalizers) == 1 && fakePGC.Status.State != "pgcluster Initialized" {
+		return r.fetchStateThenReturn(ctx, &fakePGC)
+	}
+
+	// when postgresqlcluster is ready
+	if fakePGC.ObjectMeta.DeletionTimestamp.IsZero() && len(fakePGC.ObjectMeta.Finalizers) == 1 && fakePGC.Status.State == "pgcluster Initialized" {
+		fakePGC.ObjectMeta.Finalizers = append(fakePGC.ObjectMeta.Finalizers, "finalizers.postgresqlcluster.radondb.com/initialized")
+		return r.updateSpecThenReturn(ctx, &fakePGC)
+	}
+
+	// handler cpu/mem/replica change
+	shouldBreakThisTerm, err := r.compareWithPGCluster(ctx, &fakePGC)
+	if err != nil {
+		return ctrl.Result{}, err
+	}
+	if shouldBreakThisTerm {
+		return r.updateSpecThenReturn(ctx, &fakePGC)
+	}
+
+	// handle user info change
+	if err := r.updateUserList(&fakePGC); err != nil {
+		return ctrl.Result{}, err
+	}
+
+	return r.fetchStateThenReturn(ctx, &fakePGC)
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -106,84 +131,4 @@ func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 			UpdateFunc: eventhandler.WhenConfigMapUpdated,
 		}).
 		Complete(r)
-}
-
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
-
-// TODO NEED OPTIMIZED: should compare with pgcluster CR to decide how to reconcile resource, might lost change for pgcluster in this case
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
-	c, err := controller.New("postgresqlCluster-controller", mgr, controller.Options{Reconciler: r})
-	if err != nil {
-		return err
-	}
-
-	reconcileObj := r.(*PostgreSQLClusterReconciler)
-	// Watch for changes to PostgreSQLCluster
-	err = c.Watch(&source.Kind{Type: &v1alpha1.PostgreSQLCluster{}}, &handler.Funcs{
-		CreateFunc: func(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
-			pg := event.Object.(*v1alpha1.PostgreSQLCluster)
-			if pg.Status.State == "" {
-				if err = cluster.CreatePgCluster(pg); err != nil {
-					klog.Errorf("create Pgcluster resource error: %s", err)
-				}
-				pg = updateState(mgr, pg)
-				err = reconcileObj.Status().Update(context.TODO(), pg)
-				if err != nil {
-					if errors.IsConflict(err) {
-						return
-					}
-					klog.Errorf("update PostgreSQLCluster state error: %s", err)
-				}
-			}
-		},
-
-		UpdateFunc: func(updateEvent event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
-			oldCluster := updateEvent.ObjectOld.(*v1alpha1.PostgreSQLCluster)
-			newCluster := updateEvent.ObjectNew.(*v1alpha1.PostgreSQLCluster)
-
-			err = doUpdateCluster(oldCluster, newCluster)
-			if err != nil {
-				klog.Errorf("update cluster error: %s", err)
-			}
-			newCluster = updateState(mgr, newCluster)
-			err = reconcileObj.Status().Update(context.TODO(), newCluster)
-			if err != nil {
-				klog.Errorf("update PostgreSQLCluster state error: %s", err)
-			}
-		},
-		DeleteFunc: func(deleteEvent event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
-			pg := deleteEvent.Object.(*v1alpha1.PostgreSQLCluster)
-			err = cluster.DeletePgCluster(pg)
-			if err != nil {
-				klog.Errorf("delete cluster error: %s", err)
-			}
-			//pg = updateState(mgr, pg)
-		},
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func updateState(mgr manager.Manager, pg *v1alpha1.PostgreSQLCluster) *v1alpha1.PostgreSQLCluster {
-	pgc := &v1.Pgcluster{}
-	err := mgr.GetClient().Get(context.TODO(), types.NamespacedName{
-		Namespace: pg.Namespace,
-		Name:      pg.Name,
-	}, pgc)
-	if err != nil {
-		klog.Errorf("get pgcluster resource error: %s", err)
-	}
-	if string(pgc.Status.State) != "" {
-		pg.Status.State = string(pgc.Status.State)
-	}
-	return pg
-}
-
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &PostgreSQLClusterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}
 }

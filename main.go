@@ -18,17 +18,20 @@ package main
 
 import (
 	"flag"
-	radondbcomv1 "github.com/kubesphere/api/v1"
-	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
-	"github.com/kubesphere/controllers"
+	"os"
+
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
-	"os"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+
+	radondbcomv1 "github.com/kubesphere/api/v1"
+	pgclusterv1alpha1 "github.com/kubesphere/api/v1alpha1"
+	//radondbcomv1 "github.com/kubesphere/apis/radondb.com/v1"
+	"github.com/kubesphere/controllers"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -72,12 +75,6 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "setup manager failed")
-	}
-
-	err = controllers.Add(mgr)
-	if err != nil {
-		setupLog.Error(err, "add controller error")
-		os.Exit(1)
 	}
 
 	if err = (&controllers.PostgreSQLClusterReconciler{

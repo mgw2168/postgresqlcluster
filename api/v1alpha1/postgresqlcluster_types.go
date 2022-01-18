@@ -124,6 +124,19 @@ type PostgreSQLCluster struct {
 	Status PostgreSQLClusterStatus `json:"status,omitempty"`
 }
 
+func (in *PostgreSQLCluster) IsUserExisted(username string) bool {
+	if in.Spec.Username == username {
+		return true
+	}
+
+	for _, u := range in.Spec.Users {
+		if u.UserName == username {
+			return true
+		}
+	}
+	return false
+}
+
 //+kubebuilder:object:root=true
 
 // PostgreSQLClusterList contains a list of PostgreSQLClusterSpec
