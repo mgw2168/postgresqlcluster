@@ -53,7 +53,7 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		}
 	}
 
-	if len(newObj.Spec.Users) > 0 && !reflect.DeepEqual(newObj.Spec.Users, oldObj.Spec.Users) {
+	if !reflect.DeepEqual(newObj.Spec.Users, oldObj.Spec.Users) {
 		// create user
 		for _, newUser := range newObj.Spec.Users {
 			if newUser.UserName == "postgres" {
