@@ -3,6 +3,7 @@ package user
 import (
 	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/models"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
 )
@@ -13,7 +14,7 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 	clusterName = append(clusterName, pg.Spec.Name)
 	updateUserReq := &pkg.UpdateUserRequest{
 		Clusters:                 clusterName,
-		ClientVersion:            "4.7.1",
+		ClientVersion:            pkg.ClientVersion,
 		Namespace:                pg.Spec.Namespace,
 		Username:                 username,
 		Password:                 passwd,
@@ -33,21 +34,7 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		return
 	}
 
-	flag := true
-	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == pkg.UpdateUser {
-			flag = false
-			pg.Status.Condition[i].Code = resp.Code
-			pg.Status.Condition[i].Msg = resp.Msg
-			break
-		}
-	}
-	if flag {
-		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  pkg.UpdateUser,
-			Code: resp.Code,
-			Msg:  resp.Msg,
-		})
-	}
+	models.MergeCondition(pg, pkg.UpdateUser, resp.Status)
+
 	return
 }

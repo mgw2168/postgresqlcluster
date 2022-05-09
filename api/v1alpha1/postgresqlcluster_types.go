@@ -88,6 +88,27 @@ type PostgreSQLClusterSpec struct {
 	ShowSystemAccounts bool `json:"showSystemAccounts,omitempty"`
 
 	ClusterConfig string `json:"postgresqlParams,omitempty"`
+
+	// TODO add comment
+	PerformBackup string `json:"performBackup,omitempty"`
+	// TODO add comment
+	BackupToDelete string `json:"backupToDelete,omitempty"`
+
+	FullBackupSchedule string `json:"fullBackupSchedule,omitempty"`
+	DiffBackupSchedule string `json:"diffBackupSchedule,omitempty"`
+	IncrBackupSchedule string `json:"incrBackupSchedule,omitempty"`
+
+	BackrestStorageType string `json:"backrestStorageType,omitempty"`
+
+	BackrestS3Key       string `json:"backrestS3Key,omitempty"`
+	BackrestS3KeySecret string `json:"backrestS3KeySecret,omitempty"`
+	BackrestS3Bucket    string `json:"backrestS3Bucket,omitempty"`
+	BackrestS3Endpoint  string `json:"backrestS3Endpoint,omitempty"`
+	BackrestS3Region    string `json:"backrestS3Region,omitempty"`
+	BackrestS3URIStyle  string `json:"backrestS3URIStyle,omitempty"`
+
+	RestoreFromPath string `json:"restoreFromPath,omitempty"`
+	RestoreFrom     string `json:"restoreFrom,omitempty"`
 }
 
 type User struct {
@@ -97,16 +118,30 @@ type User struct {
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
+	Backups   []PgBackup  `json:"backups,omitempty"`
 	Condition []ApiResult `json:"condition,omitempty"`
 	State     string      `json:"state,omitempty"`
 }
 
+type PgBackup struct {
+	Type           string `json:"type"`
+	Name           string `json:"name"`
+	StorageType    string `json:"storageType"`
+	StartTime      int64  `json:"startTime"`
+	EndTime        int64  `json:"endTime"`
+	StartArchive   string `json:"startArchive"`
+	StopArchive    string `json:"stopArchive"`
+	DatabaseSize   int64  `json:"databaseSize"`
+	RepositorySize int64  `json:"repositorySize"`
+}
+
 // ApiResult defines the result of pg operator ApiServer
 type ApiResult struct {
-	Api  string `json:"api,omitempty"`
-	Code string `json:"code,omitempty"`
-	Msg  string `json:"msg,omitempty"`
-	Data string `json:"data,omitempty"`
+	Api        string `json:"api,omitempty"`
+	Code       string `json:"code,omitempty"`
+	Msg        string `json:"msg,omitempty"`
+	Data       string `json:"data,omitempty"`
+	UpdateTime string `json:"updateTime,omitempty"`
 }
 
 //+kubebuilder:object:root=true

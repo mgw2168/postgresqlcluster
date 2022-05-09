@@ -42,6 +42,23 @@ spec:
                 type: boolean
               autofail:
                 type: integer
+              backrestS3Bucket:
+                type: string
+              backrestS3Endpoint:
+                type: string
+              backrestS3Key:
+                type: string
+              backrestS3KeySecret:
+                type: string
+              backrestS3Region:
+                type: string
+              backrestS3URIStyle:
+                type: string
+              backrestStorageType:
+                type: string
+              backupToDelete:
+                description: TODO add comment
+                type: string
               ccpImage:
                 type: string
               ccpImageTag:
@@ -63,6 +80,12 @@ spec:
                 type: boolean
               deleteData:
                 type: boolean
+              diffBackupSchedule:
+                type: string
+              fullBackupSchedule:
+                type: string
+              incrBackupSchedule:
+                type: string
               managedUser:
                 type: boolean
               memoryLimit:
@@ -86,6 +109,9 @@ spec:
                 type: integer
               passwordType:
                 type: string
+              performBackup:
+                description: TODO add comment
+                type: string
               pgVersion:
                 type: string
               podAnnotation:
@@ -106,6 +132,10 @@ spec:
               restart:
                 description: '******** restart cluster'
                 type: boolean
+              restoreFrom:
+                type: string
+              restoreFromPath:
+                type: string
               rollingUpdate:
                 type: boolean
               selector:
@@ -192,6 +222,43 @@ spec:
           status:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
             properties:
+              backups:
+                items:
+                  properties:
+                    databaseSize:
+                      format: int64
+                      type: integer
+                    endTime:
+                      format: int64
+                      type: integer
+                    name:
+                      type: string
+                    repositorySize:
+                      format: int64
+                      type: integer
+                    startArchive:
+                      type: string
+                    startTime:
+                      format: int64
+                      type: integer
+                    stopArchive:
+                      type: string
+                    storageType:
+                      type: string
+                    type:
+                      type: string
+                  required:
+                  - databaseSize
+                  - endTime
+                  - name
+                  - repositorySize
+                  - startArchive
+                  - startTime
+                  - stopArchive
+                  - storageType
+                  - type
+                  type: object
+                type: array
               condition:
                 items:
                   description: ApiResult defines the result of pg operator ApiServer
@@ -203,6 +270,8 @@ spec:
                     data:
                       type: string
                     msg:
+                      type: string
+                    updateTime:
                       type: string
                   type: object
                 type: array

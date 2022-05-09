@@ -9,8 +9,8 @@ const (
 	// port of the postgresql operator api server
 	srvPort = "8443"
 	// IP svc name.namespace
-	//IP = "http://139.198.21.143"
-	IP = "http://postgres-operator." + PgoNamespace
+	IP = "http://127.0.0.1"
+	//IP = "http://postgres-operator." + PgoNamespace
 	// Cluster path
 	HostPath           = IP + ":" + srvPort
 	CreateClusterPath  = HostPath + "/clusters"
@@ -29,11 +29,24 @@ const (
 	UpdateUserPath = HostPath + "/userupdate"
 	ShowUserPath   = HostPath + "/usershow"
 
+	// backrestbackup
+	BackrestBackupPath = HostPath + "/backrestbackup"
+
+	// backrest
+	BackrestPath = HostPath + "/backrest"
+
+	// schedule
+	SchedulePath       = HostPath + "/schedule"
+	ScheduleDeletePath = HostPath + "/scheduledelete"
+
 	// status
 	Ok      = "ok"
 	Error   = "error"
 	Failed  = "failed"
 	Success = "success"
+
+	// client version
+	ClientVersion = "2.1.1"
 
 	// action of the cluster or user
 	CreateCluster    = "create_cluster"
@@ -46,4 +59,9 @@ const (
 	DeleteUser       = "delete_user"
 	UpdateUser       = "update_user"
 	ShowUser         = "show_user"
+	PerformBackup    = "perform_backup"
+	ShowBackup       = "show_backup"
+	DeleteBackup     = "delete_backup"
+	CreateSchedule   = "create_schedule"
+	DeleteSchedule   = "delete_schedule"
 )

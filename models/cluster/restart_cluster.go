@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/models"
 	"github.com/kubesphere/pkg"
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/klog/v2"
@@ -15,7 +16,7 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		ClusterName:   pg.Spec.Name,
 		RollingUpdate: true,
 		Targets:       pg.Spec.Targets,
-		ClientVersion: "4.7.1",
+		ClientVersion: pkg.ClientVersion,
 	}
 	klog.Infof("params: %+v", restartReq)
 	respByte, err := pkg.Call("POST", pkg.RestartClusterPath, restartReq)
@@ -29,24 +30,8 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		return
 	}
 
-	flag := true
-	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == pkg.RestartCluster {
-			flag = false
-			pg.Status.Condition[i].Code = resp.Code
-			pg.Status.Condition[i].Msg = resp.Msg
-			pg.Status.Condition[i].Data = resp.Result.ErrorMessage
-			break
-		}
-	}
-	if flag {
-		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  pkg.RestartCluster,
-			Code: resp.Code,
-			Msg:  resp.Msg,
-			Data: resp.Result.ErrorMessage,
-		})
-	}
+	models.MergeCondition(pg, pkg.RestartCluster, resp.Status)
+
 	pg.Spec.Restart = false
 	return
 }

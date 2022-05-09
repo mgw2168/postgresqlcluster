@@ -74,12 +74,6 @@ func main() {
 		setupLog.Error(err, "setup manager failed")
 	}
 
-	err = controllers.Add(mgr)
-	if err != nil {
-		setupLog.Error(err, "add controller error")
-		os.Exit(1)
-	}
-
 	if err = (&controllers.PostgreSQLClusterReconciler{
 		Client: mgr.GetClient(),
 		Scheme: mgr.GetScheme(),

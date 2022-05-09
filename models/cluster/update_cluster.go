@@ -3,6 +3,7 @@ package cluster
 import (
 	"encoding/json"
 	"github.com/kubesphere/api/v1alpha1"
+	"github.com/kubesphere/models"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
 )
@@ -17,7 +18,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 	clusterName = append(clusterName, pg.Spec.Name)
 	updateReq := &pkg.UpdateClusterRequest{
 		Clustername:   clusterName,
-		ClientVersion: "4.7.1",
+		ClientVersion: pkg.ClientVersion,
 		Namespace:     pg.Spec.Namespace,
 		Autofail:      1,
 		CPULimit:      pg.Spec.CPULimit,
@@ -38,22 +39,7 @@ func UpdatePgCluster(pg *v1alpha1.PostgreSQLCluster, pvc bool) (err error) {
 		return
 	}
 
-	flag := true
-	for i, _ := range pg.Status.Condition {
-		if pg.Status.Condition[i].Api == pkg.UpdateCluster {
-			flag = false
-			pg.Status.Condition[i].Code = resp.Code
-			pg.Status.Condition[i].Msg = resp.Msg
-			break
-		}
-	}
-	if flag {
-		pg.Status.Condition = append(pg.Status.Condition, v1alpha1.ApiResult{
-			Api:  pkg.UpdateCluster,
-			Code: resp.Code,
-			Msg:  resp.Msg,
-		})
-	}
+	models.MergeCondition(pg, pkg.UpdateCluster, resp.Status)
 
 	return
 }
