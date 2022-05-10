@@ -43,6 +43,7 @@ func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
 					StopArchive:    bi.Archive.Stop,
 					DatabaseSize:   bi.Info.Size,
 					RepositorySize: bi.Info.Repository.Size,
+					RepoPath:       pg.Status.BackrestRepoPath,
 				}
 				backups = append(backups, backup)
 			}

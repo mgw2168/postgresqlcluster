@@ -7,6 +7,28 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - apps
+  resources:
+  - deployments
+  verbs:
+  - delete
+  - get
+  - list
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - persistentvolumeclaims
+  - secrets
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
   - pgcluster.radondb.com
   resources:
   - postgresqlclusters
@@ -37,8 +59,12 @@ rules:
   resources:
   - storageclasses
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
 
 ---

@@ -107,8 +107,8 @@ type PostgreSQLClusterSpec struct {
 	BackrestS3Region    string `json:"backrestS3Region,omitempty"`
 	BackrestS3URIStyle  string `json:"backrestS3URIStyle,omitempty"`
 
-	RestoreFromPath string `json:"restoreFromPath,omitempty"`
-	RestoreFrom     string `json:"restoreFrom,omitempty"`
+	RestoreFrom   string `json:"restoreFrom,omitempty"`
+	RestoreTarget string `json:"restoreTarget,omitempty"`
 }
 
 type User struct {
@@ -118,14 +118,16 @@ type User struct {
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
-	Backups   []PgBackup  `json:"backups,omitempty"`
-	Condition []ApiResult `json:"condition,omitempty"`
-	State     string      `json:"state,omitempty"`
+	Backups          []PgBackup  `json:"backups,omitempty"`
+	Condition        []ApiResult `json:"condition,omitempty"`
+	BackrestRepoPath string      `json:"backrestRepoPath,omitempty"`
+	State            string      `json:"state,omitempty"`
 }
 
 type PgBackup struct {
 	Type           string `json:"type"`
 	Name           string `json:"name"`
+	RepoPath       string `json:"repoPath"`
 	StorageType    string `json:"storageType"`
 	StartTime      int64  `json:"startTime"`
 	EndTime        int64  `json:"endTime"`

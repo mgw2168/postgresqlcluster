@@ -134,7 +134,7 @@ spec:
                 type: boolean
               restoreFrom:
                 type: string
-              restoreFromPath:
+              restoreTarget:
                 type: string
               rollingUpdate:
                 type: boolean
@@ -222,6 +222,8 @@ spec:
           status:
             description: PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
             properties:
+              backrestRepoPath:
+                type: string
               backups:
                 items:
                   properties:
@@ -232,6 +234,8 @@ spec:
                       format: int64
                       type: integer
                     name:
+                      type: string
+                    repoPath:
                       type: string
                     repositorySize:
                       format: int64
@@ -251,6 +255,7 @@ spec:
                   - databaseSize
                   - endTime
                   - name
+                  - repoPath
                   - repositorySize
                   - startArchive
                   - startTime

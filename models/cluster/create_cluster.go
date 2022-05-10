@@ -3,10 +3,12 @@ package cluster
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/models"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
+	"time"
 )
 
 func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
@@ -17,6 +19,13 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		pg.Spec.CCPImageTag = "centos8-13.3-3.0-4.7.1"
 	case "14":
 		pg.Spec.CCPImageTag = "debian-14.2-3.1-2.1.1"
+	}
+
+	if pg.Spec.BackrestStorageType == "s3" && pg.HasValidS3Conf() {
+		if err = CreateManagedResource(pg); err != nil {
+			klog.Errorf("create managed resource error: %s", err)
+			return err
+		}
 	}
 
 	var resp pkg.CreateClusterResponse
@@ -47,6 +56,9 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	if pg.Spec.BackrestStorageType == "s3" && pg.HasValidS3Conf() {
+		repoPath := fmt.Sprintf("%s-%s", pg.Name, time.Now().Format("20060102-150405"))
+		pg.Status.BackrestRepoPath = repoPath
+
 		clusterReq.BackrestStorageType = pg.Spec.BackrestStorageType
 
 		plainKey, _ := base64.StdEncoding.DecodeString(pg.Spec.BackrestS3Key)
@@ -60,7 +72,17 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		clusterReq.BackrestS3Endpoint = pg.Spec.BackrestS3Endpoint
 		clusterReq.BackrestS3URIStyle = pg.Spec.BackrestS3URIStyle
 		clusterReq.BackrestS3VerifyTLS = pkg.UpdateBackrestS3VerifyTLSDisable
-		clusterReq.BackrestRepoPath = "/" + pg.Name
+		clusterReq.BackrestRepoPath = fmt.Sprintf("/%s", repoPath)
+
+		if pg.Spec.RestoreFrom != "" {
+			clusterReq.PGDataSource.RestoreFrom = GetRestoreFromName(pg)
+			clusterReq.PGDataSource.Namespace = pg.Namespace
+			if pg.Spec.RestoreTarget != "" {
+				clusterReq.PGDataSource.RestoreOpts = fmt.Sprintf(`--repo-type=%s --type=time --target='%s'`, pg.Spec.BackrestStorageType, pg.Spec.RestoreTarget)
+			} else {
+				clusterReq.PGDataSource.RestoreOpts = fmt.Sprintf(`--repo-type=%s`, pg.Spec.BackrestStorageType)
+			}
+		}
 	}
 
 	klog.Infof("params: %+v", clusterReq)

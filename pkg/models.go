@@ -43,6 +43,14 @@ type CreatePgCluster struct {
 	BackrestS3URIStyle  string
 	BackrestS3VerifyTLS UpdateBackrestS3VerifyTLS
 	BackrestRepoPath    string
+
+	PGDataSource PGDataSourceSpec
+}
+
+type PGDataSourceSpec struct {
+	Namespace   string `json:"namespace"`
+	RestoreFrom string `json:"restoreFrom"`
+	RestoreOpts string `json:"restoreOpts"`
 }
 
 // UpdateBackrestS3VerifyTLS defines the types for updating the S3 TLS verification configuration

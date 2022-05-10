@@ -9,6 +9,9 @@ import (
 )
 
 func DeletePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
+	// delete managed resource if spec->restoreFrom is managed by dmp
+	DeleteManagedResource(pg)
+
 	var resp pkg.DeleteClusterResponse
 	clusterReq := &pkg.DeleteClusterRequest{
 		Clustername:   pg.Spec.Name,
