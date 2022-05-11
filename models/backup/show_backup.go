@@ -6,6 +6,7 @@ import (
 	"github.com/kubesphere/models"
 	"github.com/kubesphere/pkg"
 	"k8s.io/klog/v2"
+	"sort"
 )
 
 func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
@@ -50,8 +51,17 @@ func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		}
 	}
 
+	if len(backups) > 1 {
+		sort.Slice(backups, func(i, j int) bool {
+			return backups[i].StartTime < backups[j].StartTime
+		})
+
+		// hidde the first backup which can not delete
+		backups = backups[1:]
+		pg.Status.Backups = backups
+	}
+
 	models.MergeCondition(pg, pkg.ShowBackup, resp.Status)
-	pg.Status.Backups = backups
 
 	return nil
 }

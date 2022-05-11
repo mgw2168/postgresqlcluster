@@ -8,7 +8,7 @@ import (
 
 func TestShowBackup(t *testing.T) {
 	pgcluster := &v1alpha1.PostgreSQLCluster{}
-	pgcluster.Name = "radondb-ukcv10"
+	pgcluster.Name = "radondb-pg02"
 	pgcluster.Namespace = "dev"
 
 	err := ShowBackup(pgcluster)
