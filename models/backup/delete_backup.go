@@ -31,12 +31,16 @@ func DeleteBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
 		klog.Infof("params: %+v", deleteBackupReq)
 		respByte, err := pkg.Call("DELETE", pkg.BackrestPath, deleteBackupReq)
 		if err != nil {
-			klog.Errorf("call backrest backup error: %s", err.Error())
-			return err
+			klog.Errorf("call delete backrest backup error: %s", err.Error())
+			continue
 		}
 		if err = json.Unmarshal(respByte, &resp); err != nil {
 			klog.Errorf("json unmarshal error: %s; data: %s", err, respByte)
-			return err
+			continue
+		}
+
+		if resp.Status.Code == "ok" {
+			pg.Status.BackupDeletingQueue = append(pg.Status.BackupDeletingQueue, parts[i])
 		}
 
 		models.MergeCondition(pg, pkg.DeleteBackup, resp.Status)

@@ -10,7 +10,8 @@ import (
 )
 
 func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
-	var backups []v1alpha1.PgBackup
+	backups := make(map[string]v1alpha1.PgBackup)
+	deletingBackups := make(map[string]string)
 
 	url := pkg.BackrestPath + "/" + pg.Name + "?version=" + pkg.ClientVersion + "&selector=" + "" + "&namespace=" + pg.Namespace
 	var resp pkg.ShowBackrestResponse
@@ -35,30 +36,49 @@ func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
 			for k, _ := range info.Backups {
 				bi := info.Backups[k]
 				backup := v1alpha1.PgBackup{
-					Type:           bi.Type,
-					Name:           bi.Label,
-					StorageType:    item.StorageType,
-					StartTime:      bi.Timestamp.Start,
-					EndTime:        bi.Timestamp.Stop,
-					StartArchive:   bi.Archive.Start,
-					StopArchive:    bi.Archive.Stop,
-					DatabaseSize:   bi.Info.Size,
-					RepositorySize: bi.Info.Repository.Size,
-					RepoPath:       pg.Status.BackrestRepoPath,
+					Type:            bi.Type,
+					Name:            bi.Label,
+					StorageType:     item.StorageType,
+					StartTime:       bi.Timestamp.Start,
+					EndTime:         bi.Timestamp.Stop,
+					StartArchive:    bi.Archive.Start,
+					StopArchive:     bi.Archive.Stop,
+					DatabaseSize:    bi.Info.Size,
+					RepositorySize:  bi.Info.Repository.Size,
+					RepoPath:        pg.Status.BackrestRepoPath,
+					BackupReference: bi.Reference,
 				}
-				backups = append(backups, backup)
+				backups[backup.Name] = backup
 			}
 		}
 	}
 
+	for _, b := range pg.Status.BackupDeletingQueue {
+		if _, ok := backups[b]; ok {
+			deletingBackups[b] = b
+
+			// do not show backups which is being deleting
+			delete(backups, b)
+		}
+	}
+
+	// update BackupDeletingQueue to remove backups which already deleting success.
+	pg.Status.BackupDeletingQueue = nil
+	for k, _ := range deletingBackups {
+		pg.Status.BackupDeletingQueue = append(pg.Status.BackupDeletingQueue, k)
+	}
+
 	if len(backups) > 1 {
-		sort.Slice(backups, func(i, j int) bool {
-			return backups[i].StartTime < backups[j].StartTime
+		pg.Status.Backups = nil
+		for _, v := range backups {
+			pg.Status.Backups = append(pg.Status.Backups, v)
+		}
+		sort.Slice(pg.Status.Backups, func(i, j int) bool {
+			return pg.Status.Backups[i].StartTime < pg.Status.Backups[j].StartTime
 		})
 
 		// hidde the first backup which can not delete
-		backups = backups[1:]
-		pg.Status.Backups = backups
+		pg.Status.Backups = pg.Status.Backups[1:]
 	}
 
 	models.MergeCondition(pg, pkg.ShowBackup, resp.Status)

@@ -224,9 +224,17 @@ spec:
             properties:
               backrestRepoPath:
                 type: string
+              backupDeletingQueue:
+                items:
+                  type: string
+                type: array
               backups:
                 items:
                   properties:
+                    backupReference:
+                      items:
+                        type: string
+                      type: array
                     databaseSize:
                       format: int64
                       type: integer

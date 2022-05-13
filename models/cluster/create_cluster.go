@@ -56,7 +56,7 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	}
 
 	if pg.Spec.BackrestStorageType == "s3" && pg.HasValidS3Conf() {
-		repoPath := fmt.Sprintf("%s-%s", pg.Name, time.Now().Format("20060102-150405"))
+		repoPath := fmt.Sprintf("%s-%s-%s", pg.Name, pg.Spec.PgVersion, time.Now().Format("20060102-150405"))
 		pg.Status.BackrestRepoPath = repoPath
 
 		clusterReq.BackrestStorageType = pg.Spec.BackrestStorageType
@@ -78,7 +78,7 @@ func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 			clusterReq.PGDataSource.RestoreFrom = GetRestoreFromName(pg)
 			clusterReq.PGDataSource.Namespace = pg.Namespace
 			if pg.Spec.RestoreTarget != "" {
-				clusterReq.PGDataSource.RestoreOpts = fmt.Sprintf(`--repo-type=%s --type=time --target='%s'`, pg.Spec.BackrestStorageType, pg.Spec.RestoreTarget)
+				clusterReq.PGDataSource.RestoreOpts = fmt.Sprintf(`--repo-type=%s --set='%s'`, pg.Spec.BackrestStorageType, pg.Spec.RestoreTarget)
 			} else {
 				clusterReq.PGDataSource.RestoreOpts = fmt.Sprintf(`--repo-type=%s`, pg.Spec.BackrestStorageType)
 			}

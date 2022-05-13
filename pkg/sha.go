@@ -9,5 +9,5 @@ func Sha1Str(s string) string {
 	r := sha1.Sum([]byte(s))
 	foo := hex.EncodeToString(r[:])
 
-	return string([]byte(foo)[:10])
+	return string([]byte(foo)[:12])
 }

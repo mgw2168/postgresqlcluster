@@ -118,23 +118,25 @@ type User struct {
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster
 type PostgreSQLClusterStatus struct {
-	Backups          []PgBackup  `json:"backups,omitempty"`
-	Condition        []ApiResult `json:"condition,omitempty"`
-	BackrestRepoPath string      `json:"backrestRepoPath,omitempty"`
-	State            string      `json:"state,omitempty"`
+	Backups             []PgBackup  `json:"backups,omitempty"`
+	Condition           []ApiResult `json:"condition,omitempty"`
+	BackupDeletingQueue []string    `json:"backupDeletingQueue,omitempty"`
+	BackrestRepoPath    string      `json:"backrestRepoPath,omitempty"`
+	State               string      `json:"state,omitempty"`
 }
 
 type PgBackup struct {
-	Type           string `json:"type"`
-	Name           string `json:"name"`
-	RepoPath       string `json:"repoPath"`
-	StorageType    string `json:"storageType"`
-	StartTime      int64  `json:"startTime"`
-	EndTime        int64  `json:"endTime"`
-	StartArchive   string `json:"startArchive"`
-	StopArchive    string `json:"stopArchive"`
-	DatabaseSize   int64  `json:"databaseSize"`
-	RepositorySize int64  `json:"repositorySize"`
+	Type            string   `json:"type"`
+	Name            string   `json:"name"`
+	RepoPath        string   `json:"repoPath"`
+	StorageType     string   `json:"storageType"`
+	StartTime       int64    `json:"startTime"`
+	EndTime         int64    `json:"endTime"`
+	StartArchive    string   `json:"startArchive"`
+	StopArchive     string   `json:"stopArchive"`
+	DatabaseSize    int64    `json:"databaseSize"`
+	RepositorySize  int64    `json:"repositorySize"`
+	BackupReference []string `json:"backupReference,omitempty"`
 }
 
 // ApiResult defines the result of pg operator ApiServer
