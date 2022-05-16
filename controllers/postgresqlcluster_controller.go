@@ -18,14 +18,17 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	v1 "github.com/kubesphere/api/v1"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/eventhandler"
+	"github.com/kubesphere/k8sclient"
 	"github.com/kubesphere/models/backup"
 	"github.com/kubesphere/models/cluster"
 	"github.com/kubesphere/pkg"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
@@ -62,6 +65,7 @@ var (
 //+kubebuilder:rbac:groups=core,resources=configmaps;secrets;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;delete
+//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list
 
 func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
@@ -143,6 +147,31 @@ func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Complete(r)
 }
 
+func (r *PostgreSQLClusterReconciler) isInBackup(pg *v1alpha1.PostgreSQLCluster) bool {
+	k8s := k8sclient.GetKubernetesClient()
+	backupJobName := "backrest-backup-%s"
+	scheduleBackupJobName := "%s-full-sch-backup"
+
+	job, err := k8s.BatchV1().Jobs(pg.Namespace).Get(context.TODO(), fmt.Sprintf(backupJobName, pg.Name), metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+
+	if job.Status.Active > 0 {
+		return true
+	}
+
+	job, err = k8s.BatchV1().Jobs(pg.Namespace).Get(context.TODO(), fmt.Sprintf(scheduleBackupJobName, pg.Name), metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	if job.Status.Active > 0 {
+		return true
+	}
+
+	return false
+}
+
 func (r *PostgreSQLClusterReconciler) updateState(pg *v1alpha1.PostgreSQLCluster) error {
 	pgc := &v1.Pgcluster{}
 	err := r.Client.Get(context.TODO(), types.NamespacedName{
@@ -152,8 +181,15 @@ func (r *PostgreSQLClusterReconciler) updateState(pg *v1alpha1.PostgreSQLCluster
 	if err != nil {
 		klog.Errorf("get pgcluster resource error: %s", err)
 	}
-	if string(pgc.Status.State) != "" {
+
+	if pgc.Status.State != "" {
 		pg.Status.State = string(pgc.Status.State)
+
+		if pgc.Status.State != StatusBootstrapped && pgc.Status.State != StatusProcessed {
+			if r.isInBackup(pg) {
+				pg.Status.State = StatusInBackup
+			}
+		}
 	}
 
 	backup.ShowBackup(pg)

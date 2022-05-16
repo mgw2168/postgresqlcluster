@@ -64,6 +64,14 @@ func doUpdateCluster(oldObj, newObj *v1alpha1.PostgreSQLCluster) (err error) {
 		}
 	}
 
+	// update full backup schedule
+	if newObj.Spec.FullBackupSchedule != "" && oldObj.Spec.FullBackupSchedule != "" && newObj.Spec.FullBackupSchedule != oldObj.Spec.FullBackupSchedule {
+		err = schedule.UpdateSchedule(newObj, "full")
+		if err != nil {
+			klog.Errorf("update schedule error: %s", err)
+		}
+	}
+
 	// delete full backup schedule
 	if newObj.Spec.FullBackupSchedule == "" && newObj.Spec.FullBackupSchedule != oldObj.Spec.FullBackupSchedule {
 		err = schedule.DeleteSchedule(newObj, "full")
