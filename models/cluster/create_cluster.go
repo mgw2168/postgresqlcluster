@@ -11,14 +11,21 @@ import (
 	"time"
 )
 
+const ccpImageTag11 = "debian-11.16-3.1-2.1.1"
+const ccpImageTag12 = "debian-12.10-3.1-2.1.1"
+const ccpImageTag13 = "debian-13.6-3.1-2.1.1"
+const ccpImageTag14 = "debian-14.2-3.1-2.1.1"
+
 func CreatePgCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	switch pg.Spec.PgVersion {
+	case "11":
+		pg.Spec.CCPImageTag = ccpImageTag11
 	case "12":
-		pg.Spec.CCPImageTag = "centos8-12.7-3.0-4.7.1"
+		pg.Spec.CCPImageTag = ccpImageTag12
 	case "13":
-		pg.Spec.CCPImageTag = "centos8-13.3-3.0-4.7.1"
+		pg.Spec.CCPImageTag = ccpImageTag13
 	case "14":
-		pg.Spec.CCPImageTag = "debian-14.2-3.1-2.1.1"
+		pg.Spec.CCPImageTag = ccpImageTag14
 	}
 
 	if pg.Spec.BackrestStorageType == "s3" && pg.HasValidS3Conf() {
