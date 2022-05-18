@@ -79,6 +79,8 @@ func ShowBackup(pg *v1alpha1.PostgreSQLCluster) (err error) {
 
 		// hidde the first backup which can not delete
 		pg.Status.Backups = pg.Status.Backups[1:]
+	} else {
+		pg.Status.Backups = nil
 	}
 
 	models.MergeCondition(pg, pkg.ShowBackup, resp.Status)
