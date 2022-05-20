@@ -110,31 +110,36 @@ rules:
       - update
       - watch
   - apiGroups:
-      - pgcluster.radondb.com
+      - pgcluster.kubesphere.io
     resources:
       - postgresqlclusters
     verbs:
       - create
+      - update
       - delete
+      - patch
+      - watch
       - get
       - list
-      - patch
-      - update
-      - watch
   - apiGroups:
-      - pgcluster.radondb.com
+      - radondb.com
     resources:
-      - postgresqlclusters/finalizers
+      - pgclusters
     verbs:
-      - update
+      - watch
+      - get
+      - list
   - apiGroups:
-      - pgcluster.radondb.com
+      - pgcluster.kubesphere.io
     resources:
       - postgresqlclusters/status
     verbs:
       - get
+      - list
       - patch
       - update
+      - create
+      - watch
   - apiGroups:
       - storage.k8s.io
     resources:
