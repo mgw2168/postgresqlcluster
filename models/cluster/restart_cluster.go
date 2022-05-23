@@ -8,14 +8,12 @@ import (
 	"k8s.io/klog/v2"
 )
 
-// todo annotation
 func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 	var resp pkg.RestartResponse
 	restartReq := &pkg.RestartRequest{
 		Namespace:     pg.Spec.Namespace,
 		ClusterName:   pg.Spec.Name,
 		RollingUpdate: true,
-		Targets:       pg.Spec.Targets,
 		ClientVersion: pkg.ClientVersion,
 	}
 	klog.Infof("params: %+v", restartReq)
@@ -32,6 +30,5 @@ func RestartCluster(pg *v1alpha1.PostgreSQLCluster) (err error) {
 
 	models.MergeCondition(pg, pkg.RestartCluster, resp.Status)
 
-	pg.Spec.Restart = false
 	return
 }

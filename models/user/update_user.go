@@ -21,7 +21,7 @@ func UpdatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 		PasswordAgeDays:          86400,
 		PasswordLength:           8,
 		PasswordType:             "md5",
-		SetSystemAccountPassword: pg.Spec.SetSystemAccountPassword,
+		SetSystemAccountPassword: false,
 	}
 	klog.Infof("params: %+v", updateUserReq)
 	respByte, err := pkg.Call("POST", pkg.UpdateUserPath, updateUserReq)

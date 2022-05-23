@@ -37,10 +37,13 @@ spec:
             description: PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
             properties:
               action:
+                description: Deprecated
                 type: string
               allFlag:
+                description: Deprecated
                 type: boolean
               autofail:
+                description: Deprecated
                 type: integer
               backrestS3Bucket:
                 type: string
@@ -57,14 +60,15 @@ spec:
               backrestStorageType:
                 type: string
               backupToDelete:
-                description: TODO add comment
+                description: like "1653299584|backup1|backup2|backup3", use timestamp
+                  to mark change
                 type: string
               ccpImage:
                 type: string
               ccpImageTag:
                 type: string
               clusterName:
-                description: '******** update cluster'
+                description: Deprecated
                 items:
                   type: string
                 type: array
@@ -73,12 +77,16 @@ spec:
               cpuRequest:
                 type: string
               database:
+                description: Deprecated
                 type: string
               delete-data:
+                description: Deprecated
                 type: string
               deleteBackups:
+                description: Deprecated
                 type: boolean
               deleteData:
+                description: Deprecated
                 type: boolean
               diffBackupSchedule:
                 type: string
@@ -87,42 +95,50 @@ spec:
               incrBackupSchedule:
                 type: string
               managedUser:
+                description: Deprecated
                 type: boolean
               memoryLimit:
                 type: string
               memoryRequest:
                 type: string
               name:
-                description: '******** create cluster params ******** ClientVersion
-                  string `json:"clientVersion,omitempty"` cluster name'
+                description: '******** create cluster params ********'
                 type: string
               namespace:
                 type: string
               nodeLabel:
-                description: '******** scale cluster'
+                description: '******** scale cluster Deprecated'
                 type: string
               password:
+                description: Deprecated
                 type: string
               passwordAgeDays:
+                description: Deprecated
                 type: integer
               passwordLength:
+                description: Deprecated
                 type: integer
               passwordType:
+                description: Deprecated
                 type: string
               performBackup:
-                description: TODO add comment
+                description: like "1653299584|full","1653299584|incr", use timestamp
+                  to mark change
                 type: string
               pgVersion:
                 type: string
               podAnnotation:
+                description: Deprecated
                 items:
                   additionalProperties:
                     type: string
                   type: object
                 type: array
               postgresqlParams:
+                description: pgconf
                 type: string
               pvcSize:
+                description: '******** update cluster'
                 type: string
               replicaCount:
                 type: integer
@@ -130,38 +146,45 @@ spec:
                 description: '******** scale down'
                 type: string
               restart:
-                description: '******** restart cluster'
+                description: '******** restart cluster Deprecated'
                 type: boolean
               restoreFrom:
                 type: string
               restoreTarget:
                 type: string
               rollingUpdate:
+                description: Deprecated
                 type: boolean
               selector:
-                description: '******** delete cluster ClusterName   string `json:"clusterName"`'
+                description: '******** delete cluster Deprecated'
                 type: string
               serviceType:
+                description: Deprecated
                 type: string
               setSystemAccountPassword:
-                description: '******** update user'
+                description: '******** update user Deprecated'
                 type: boolean
               showSystemAccounts:
-                description: '******** show user'
+                description: '******** show user Deprecated'
                 type: boolean
               shutdown:
+                description: Deprecated
                 type: boolean
               startup:
+                description: Deprecated
                 type: boolean
               storageConfig:
                 type: string
               syncReplication:
+                description: 'Deprecated: move to ClusterConfig'
                 type: boolean
               targets:
+                description: Deprecated
                 items:
                   type: string
                 type: array
               tolerations:
+                description: Deprecated
                 items:
                   description: The pod this Toleration is attached to tolerates any
                     taint that matches the triple <key,value,effect> using the matching
@@ -201,6 +224,7 @@ spec:
                   type: object
                 type: array
               username:
+                description: Deprecated
                 type: string
               users:
                 description: '******** create user'

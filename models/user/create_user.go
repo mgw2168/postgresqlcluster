@@ -15,7 +15,7 @@ func CreatePgUser(pg *v1alpha1.PostgreSQLCluster, username, passwd string) (err 
 	createUserReq := &pkg.CreateUserRequest{
 		Clusters:        clusterName,
 		ClientVersion:   pkg.ClientVersion,
-		ManagedUser:     pg.Spec.ManagedUser,
+		ManagedUser:     true,
 		Namespace:       pg.Spec.Namespace,
 		Username:        username,
 		Password:        passwd,

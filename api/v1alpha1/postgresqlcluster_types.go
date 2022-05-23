@@ -26,72 +26,109 @@ import (
 
 // PostgreSQLClusterSpec defines the desired state of PostgreSQLCluster
 type PostgreSQLClusterSpec struct {
+	// Deprecated
 	Action string `json:"action,omitempty"`
-	// ******** create cluster params ********
-	//ClientVersion string `json:"clientVersion,omitempty"`
-	// cluster name
-	Name            string `json:"name"`
-	Namespace       string `json:"namespace"`
-	SyncReplication *bool  `json:"syncReplication,omitempty"`
-	CCPImage        string `json:"ccpImage,omitempty"`
-	CCPImageTag     string `json:"ccpImageTag,omitempty"`
-	PgVersion       string `json:"pgVersion,omitempty"`
-	ReplicaCount    int    `json:"replicaCount,omitempty"`
-	CPULimit        string `json:"cpuLimit,omitempty"`
-	CPURequest      string `json:"cpuRequest,omitempty"`
-	MemoryLimit     string `json:"memoryLimit,omitempty"`
-	MemoryRequest   string `json:"memoryRequest,omitempty"`
-	Database        string `json:"database,omitempty"`
-	Username        string `json:"username,omitempty"`
-	Password        string `json:"password,omitempty"`
-	StorageConfig   string `json:"storageConfig,omitempty"`
 
-	// ******** update cluster
+	// Deprecated: move to ClusterConfig
+	SyncReplication *bool `json:"syncReplication,omitempty"`
+
+	// Deprecated
+	Database string `json:"database,omitempty"`
+	// Deprecated
+	Username string `json:"username,omitempty"`
+	// Deprecated
+	Password string `json:"password,omitempty"`
+
+	// Deprecated
 	ClusterName []string `json:"clusterName,omitempty"`
-	AutoFail    int      `json:"autofail,omitempty"`
-	PVCSize     string   `json:"pvcSize,omitempty"`
-	Startup     bool     `json:"startup,omitempty"`
-	Shutdown    bool     `json:"shutdown,omitempty"`
+	// Deprecated
+	AutoFail int `json:"autofail,omitempty"`
+	// Deprecated
+	Startup bool `json:"startup,omitempty"`
+	// Deprecated
+	Shutdown bool `json:"shutdown,omitempty"`
 
 	// ******** delete cluster
-	//ClusterName   string `json:"clusterName"`
-	Selector      string `json:"selector,omitempty"`
-	AllFlag       bool   `json:"allFlag,omitempty"`
-	DeleteBackups bool   `json:"deleteBackups,omitempty"`
-	DeleteData    bool   `json:"deleteData,omitempty"`
+	// Deprecated
+	Selector string `json:"selector,omitempty"`
+	// Deprecated
+	AllFlag bool `json:"allFlag,omitempty"`
+	// Deprecated
+	DeleteBackups bool `json:"deleteBackups,omitempty"`
+	// Deprecated
+	DeleteData bool `json:"deleteData,omitempty"`
 
 	// ******** scale cluster
-	NodeLabel   string          `json:"nodeLabel,omitempty"`
-	ServiceType string          `json:"serviceType,omitempty"`
+	// Deprecated
+	NodeLabel string `json:"nodeLabel,omitempty"`
+	// Deprecated
+	ServiceType string `json:"serviceType,omitempty"`
+	// Deprecated
 	Tolerations []v1.Toleration `json:"tolerations,omitempty"`
 
-	// ******** scale down
-	ReplicaName         string `json:"replicaName,omitempty"`
+	// Deprecated
 	ScaleDownDeleteData string `json:"delete-data,omitempty"`
+
 	// ******** restart cluster
-	Restart       bool                `json:"restart,omitempty"`
-	RollingUpdate bool                `json:"rollingUpdate,omitempty"`
-	Targets       []string            `json:"targets,omitempty"`
+	// Deprecated
+	Restart bool `json:"restart,omitempty"`
+	// Deprecated
+	Targets []string `json:"targets,omitempty"`
+
+	// Deprecated
+	RollingUpdate bool `json:"rollingUpdate,omitempty"`
+	// Deprecated
 	PodAnnotation []map[string]string `json:"podAnnotation,omitempty"`
 
-	// ******** create user
-	Users           []User `json:"users,omitempty"`
-	ManagedUser     bool   `json:"managedUser,omitempty"`
-	PasswordAgeDays int    `json:"passwordAgeDays,omitempty"`
-	PasswordLength  int    `json:"passwordLength,omitempty"`
-	PasswordType    string `json:"passwordType,omitempty"`
-
-	// ******** update user
-	SetSystemAccountPassword bool `json:"setSystemAccountPassword,omitempty"`
+	// Deprecated
+	ManagedUser bool `json:"managedUser,omitempty"`
+	// Deprecated
+	PasswordAgeDays int `json:"passwordAgeDays,omitempty"`
+	// Deprecated
+	PasswordLength int `json:"passwordLength,omitempty"`
+	// Deprecated
+	PasswordType string `json:"passwordType,omitempty"`
 
 	// ******** show user
+	// Deprecated
 	ShowSystemAccounts bool `json:"showSystemAccounts,omitempty"`
 
+	// ******** update user
+	// Deprecated
+	SetSystemAccountPassword bool `json:"setSystemAccountPassword,omitempty"`
+
+	// ******** The above fields are deprecated or unused ********
+
+	// ******** create cluster params ********
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+
+	CCPImage      string `json:"ccpImage,omitempty"`
+	CCPImageTag   string `json:"ccpImageTag,omitempty"`
+	PgVersion     string `json:"pgVersion,omitempty"`
+	ReplicaCount  int    `json:"replicaCount,omitempty"`
+	CPULimit      string `json:"cpuLimit,omitempty"`
+	CPURequest    string `json:"cpuRequest,omitempty"`
+	MemoryLimit   string `json:"memoryLimit,omitempty"`
+	MemoryRequest string `json:"memoryRequest,omitempty"`
+
+	StorageConfig string `json:"storageConfig,omitempty"`
+
+	// ******** update cluster
+	PVCSize string `json:"pvcSize,omitempty"`
+
+	// ******** scale down
+	ReplicaName string `json:"replicaName,omitempty"`
+
+	// ******** create user
+	Users []User `json:"users,omitempty"`
+
+	// pgconf
 	ClusterConfig string `json:"postgresqlParams,omitempty"`
 
-	// TODO add comment
+	// like "1653299584|full","1653299584|incr", use timestamp to mark change
 	PerformBackup string `json:"performBackup,omitempty"`
-	// TODO add comment
+	// like "1653299584|backup1|backup2|backup3", use timestamp to mark change
 	BackupToDelete string `json:"backupToDelete,omitempty"`
 
 	FullBackupSchedule string `json:"fullBackupSchedule,omitempty"`
