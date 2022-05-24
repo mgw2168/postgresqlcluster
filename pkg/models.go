@@ -202,6 +202,7 @@ type CreateUserRequest struct {
 	PasswordType string
 	Selector     string
 	Username     string
+	Superuser    bool
 }
 
 type CreateUserResponse struct {
@@ -246,6 +247,7 @@ type UpdateUserRequest struct {
 	PasswordLength           int
 	PasswordType             string
 	SetSystemAccountPassword bool
+	Superuser                bool
 }
 
 type UpdateUserResponse struct {

@@ -230,11 +230,14 @@ spec:
                 description: '******** create user'
                 items:
                   properties:
+                    isSuperUser:
+                      type: boolean
                     password:
                       type: string
                     username:
                       type: string
                   required:
+                  - isSuperUser
                   - password
                   - username
                   type: object

@@ -149,8 +149,9 @@ type PostgreSQLClusterSpec struct {
 }
 
 type User struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
+	UserName    string `json:"username"`
+	Password    string `json:"password"`
+	IsSuperUser bool   `json:"isSuperUser"`
 }
 
 // PostgreSQLClusterStatus defines the observed state of PostgreSQLCluster

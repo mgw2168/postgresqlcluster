@@ -19,6 +19,13 @@ const (
 	PGHADCSConfigName = "%s-dcs-config"
 )
 
+const (
+	ReplicationModeKey = "replication_mode"
+	SemiSyncMode       = "semi_sync"
+	SyncMode           = "sync"
+	AsyncMode          = "async"
+)
+
 var postMasterItem = map[string]string{
 	"shared_buffers":            "shared_buffers",
 	"max_wal_senders":           "max_wal_senders",
@@ -93,6 +100,25 @@ func MergeConfig(newObj *v1alpha1.PostgreSQLCluster) error {
 	newParams := &PostgresDCS{}
 	if err = yaml.Unmarshal([]byte(newObj.Spec.ClusterConfig), newParams); err != nil {
 		return err
+	}
+
+	if rm, ok := newParams.Parameters[ReplicationModeKey]; ok {
+		if v, fine := rm.(string); fine {
+			switch v {
+			case SemiSyncMode:
+				dcsConf.SynchronousMode = true
+				dcsConf.SynchronousModeStrict = false
+			case SyncMode:
+				dcsConf.SynchronousMode = true
+				dcsConf.SynchronousModeStrict = true
+			case AsyncMode:
+				dcsConf.SynchronousMode = false
+				dcsConf.SynchronousModeStrict = false
+			}
+		}
+
+		delete(newParams.Parameters, ReplicationModeKey)
+		updateItems = append(updateItems, ReplicationModeKey)
 	}
 
 	for k, v := range newParams.Parameters {
