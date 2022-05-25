@@ -23,6 +23,7 @@ const (
 	ReplicationModeKey = "replication_mode"
 	SemiSyncMode       = "semi_sync"
 	SyncMode           = "sync"
+	SyncStandbyNames   = "synchronous_standby_names"
 	AsyncMode          = "async"
 )
 
@@ -108,17 +109,21 @@ func MergeConfig(newObj *v1alpha1.PostgreSQLCluster) error {
 			case SemiSyncMode:
 				dcsConf.SynchronousMode = true
 				dcsConf.SynchronousModeStrict = false
+				dcsConf.PostgreSQL.Parameters[SyncStandbyNames] = "*"
 			case SyncMode:
 				dcsConf.SynchronousMode = true
 				dcsConf.SynchronousModeStrict = true
+				dcsConf.PostgreSQL.Parameters[SyncStandbyNames] = "*"
 			case AsyncMode:
 				dcsConf.SynchronousMode = false
 				dcsConf.SynchronousModeStrict = false
+				dcsConf.PostgreSQL.Parameters[SyncStandbyNames] = ""
 			}
 		}
 
 		delete(newParams.Parameters, ReplicationModeKey)
 		updateItems = append(updateItems, ReplicationModeKey)
+		updateItems = append(updateItems, SyncStandbyNames)
 	}
 
 	for k, v := range newParams.Parameters {
