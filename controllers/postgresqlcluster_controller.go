@@ -18,26 +18,27 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	v1 "github.com/kubesphere/api/v1"
 	"github.com/kubesphere/api/v1alpha1"
 	"github.com/kubesphere/eventhandler"
+	"github.com/kubesphere/k8sclient"
+	"github.com/kubesphere/models/backup"
 	"github.com/kubesphere/models/cluster"
+	"github.com/kubesphere/pkg"
 	corev1 "k8s.io/api/core/v1"
 	storagev1 "k8s.io/api/storage/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/util/workqueue"
 	"k8s.io/klog/v2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 	"time"
 )
@@ -61,27 +62,25 @@ var (
 //+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=pgcluster.radondb.com,resources=postgresqlclusters/finalizers,verbs=update
 
+//+kubebuilder:rbac:groups=core,resources=configmaps;secrets;persistentvolumeclaims,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=storage.k8s.io,resources=storageclasses,verbs=get;list;watch;create;update;patch;delete
+//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;delete
+//+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list
+
 func (r *PostgreSQLClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	pgCluster := &v1alpha1.PostgreSQLCluster{}
 	if err := r.Get(ctx, req.NamespacedName, pgCluster); err != nil {
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
-	pgc := &v1.Pgcluster{}
-	err := r.Get(ctx, types.NamespacedName{
-		Namespace: pgCluster.Namespace,
-		Name:      pgCluster.Name,
-	}, pgc)
-	if err != nil {
-		klog.Errorf("get pgcluster resource error: %s", err)
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+
+	if pkg.IsFree(pgCluster.Name, pgCluster.Namespace) {
+		klog.Infof("cluster:%s in namespace:%s is updated by reconciler", pgCluster.Name, pgCluster.Namespace)
+		return ctrl.Result{RequeueAfter: checkTime}, r.updateState(pgCluster)
 	}
 
-	if string(pgc.Status.State) != "" {
-		pgCluster.Status.State = string(pgc.Status.State)
-		err = r.Status().Update(ctx, pgCluster)
-	}
-	return ctrl.Result{RequeueAfter: checkTime}, err
+	klog.Infof("cluster:%s in namespace:%s is updated by event handler", pgCluster.Name, pgCluster.Namespace)
+	return ctrl.Result{RequeueAfter: checkTime}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -105,85 +104,95 @@ func (r *PostgreSQLClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		Watches(&source.Kind{Type: &corev1.ConfigMap{}}, handler.Funcs{
 			UpdateFunc: eventhandler.WhenConfigMapUpdated,
 		}).
+		Watches(&source.Kind{Type: &v1alpha1.PostgreSQLCluster{}}, handler.Funcs{
+			CreateFunc: func(createEvent event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
+				pg := createEvent.Object.(*v1alpha1.PostgreSQLCluster)
+
+				pkg.Lock(pg.Name, pg.Namespace)
+				defer pkg.UnLock(pg.Name, pg.Namespace)
+
+				if pg.Status.State == "" {
+					if err := cluster.CreatePgCluster(pg); err != nil {
+						klog.Errorf("create Pgcluster resource error: %s", err)
+					}
+					if err := r.updateState(pg); err != nil {
+						klog.Errorf("update PostgreSQLCluster state error: %s", err)
+					}
+				}
+			},
+
+			UpdateFunc: func(updateEvent event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
+				oldCluster := updateEvent.ObjectOld.(*v1alpha1.PostgreSQLCluster)
+				newCluster := updateEvent.ObjectNew.(*v1alpha1.PostgreSQLCluster)
+
+				pkg.Lock(newCluster.Name, newCluster.Namespace)
+				defer pkg.UnLock(newCluster.Name, newCluster.Namespace)
+
+				err := doUpdateCluster(oldCluster, newCluster)
+				if err != nil {
+					klog.Errorf("update cluster error: %s", err)
+				}
+				if err = r.updateState(newCluster); err != nil {
+					klog.Errorf("update PostgreSQLCluster state error: %s", err)
+				}
+			},
+			DeleteFunc: func(deleteEvent event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
+				pg := deleteEvent.Object.(*v1alpha1.PostgreSQLCluster)
+				err := cluster.DeletePgCluster(pg)
+				if err != nil {
+					klog.Errorf("delete cluster error: %s", err)
+				}
+			},
+		}).
 		Complete(r)
 }
 
-func Add(mgr manager.Manager) error {
-	return add(mgr, newReconciler(mgr))
-}
+func (r *PostgreSQLClusterReconciler) isInBackup(pg *v1alpha1.PostgreSQLCluster) bool {
+	k8s := k8sclient.GetKubernetesClient()
+	backupJobName := "backrest-backup-%s"
+	scheduleBackupJobName := "%s-full-sch-backup"
 
-// TODO NEED OPTIMIZED: should compare with pgcluster CR to decide how to reconcile resource, might lost change for pgcluster in this case
-func add(mgr manager.Manager, r reconcile.Reconciler) error {
-	// Create a new controller
-	c, err := controller.New("postgresqlCluster-controller", mgr, controller.Options{Reconciler: r})
+	job, err := k8s.BatchV1().Jobs(pg.Namespace).Get(context.TODO(), fmt.Sprintf(backupJobName, pg.Name), metav1.GetOptions{})
 	if err != nil {
-		return err
+		return false
 	}
 
-	reconcileObj := r.(*PostgreSQLClusterReconciler)
-	// Watch for changes to PostgreSQLCluster
-	err = c.Watch(&source.Kind{Type: &v1alpha1.PostgreSQLCluster{}}, &handler.Funcs{
-		CreateFunc: func(event event.CreateEvent, limitingInterface workqueue.RateLimitingInterface) {
-			pg := event.Object.(*v1alpha1.PostgreSQLCluster)
-			if pg.Status.State == "" {
-				if err = cluster.CreatePgCluster(pg); err != nil {
-					klog.Errorf("create Pgcluster resource error: %s", err)
-				}
-				pg = updateState(mgr, pg)
-				err = reconcileObj.Status().Update(context.TODO(), pg)
-				if err != nil {
-					if errors.IsConflict(err) {
-						return
-					}
-					klog.Errorf("update PostgreSQLCluster state error: %s", err)
-				}
-			}
-		},
-
-		UpdateFunc: func(updateEvent event.UpdateEvent, limitingInterface workqueue.RateLimitingInterface) {
-			oldCluster := updateEvent.ObjectOld.(*v1alpha1.PostgreSQLCluster)
-			newCluster := updateEvent.ObjectNew.(*v1alpha1.PostgreSQLCluster)
-
-			err = doUpdateCluster(oldCluster, newCluster)
-			if err != nil {
-				klog.Errorf("update cluster error: %s", err)
-			}
-			newCluster = updateState(mgr, newCluster)
-			err = reconcileObj.Status().Update(context.TODO(), newCluster)
-			if err != nil {
-				klog.Errorf("update PostgreSQLCluster state error: %s", err)
-			}
-		},
-		DeleteFunc: func(deleteEvent event.DeleteEvent, limitingInterface workqueue.RateLimitingInterface) {
-			pg := deleteEvent.Object.(*v1alpha1.PostgreSQLCluster)
-			err = cluster.DeletePgCluster(pg)
-			if err != nil {
-				klog.Errorf("delete cluster error: %s", err)
-			}
-			//pg = updateState(mgr, pg)
-		},
-	})
-	if err != nil {
-		return err
+	if job.Status.Active > 0 {
+		return true
 	}
-	return nil
+
+	job, err = k8s.BatchV1().Jobs(pg.Namespace).Get(context.TODO(), fmt.Sprintf(scheduleBackupJobName, pg.Name), metav1.GetOptions{})
+	if err != nil {
+		return false
+	}
+	if job.Status.Active > 0 {
+		return true
+	}
+
+	return false
 }
 
-func updateState(mgr manager.Manager, pg *v1alpha1.PostgreSQLCluster) *v1alpha1.PostgreSQLCluster {
+func (r *PostgreSQLClusterReconciler) updateState(pg *v1alpha1.PostgreSQLCluster) error {
 	pgc := &v1.Pgcluster{}
-	err := mgr.GetClient().Get(context.TODO(), types.NamespacedName{
+	err := r.Client.Get(context.TODO(), types.NamespacedName{
 		Namespace: pg.Namespace,
 		Name:      pg.Name,
 	}, pgc)
 	if err != nil {
 		klog.Errorf("get pgcluster resource error: %s", err)
 	}
-	if string(pgc.Status.State) != "" {
-		pg.Status.State = string(pgc.Status.State)
-	}
-	return pg
-}
 
-func newReconciler(mgr manager.Manager) reconcile.Reconciler {
-	return &PostgreSQLClusterReconciler{Client: mgr.GetClient(), Scheme: mgr.GetScheme()}
+	if pgc.Status.State != "" {
+		pg.Status.State = string(pgc.Status.State)
+
+		if pgc.Status.State != StatusBootstrapped && pgc.Status.State != StatusProcessed {
+			if r.isInBackup(pg) {
+				pg.Status.State = StatusInBackup
+			}
+		}
+	}
+
+	backup.ShowBackup(pg)
+
+	return r.Status().Update(context.TODO(), pg)
 }

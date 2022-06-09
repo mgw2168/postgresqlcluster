@@ -18,6 +18,7 @@ COPY models/ models/
 COPY k8sclient/ k8sclient/
 COPY eventhandler/ eventhandler/
 COPY controllers/ controllers/
+COPY pgconf/ pgconf/
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o manager main.go
